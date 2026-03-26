@@ -4,9 +4,20 @@ version = "0.0.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
-[dependencies]
+[workspace]
+resolver = "3"
+members = ["crates/game_assets", "crates/game_core", "crates/game_ui", "crates/vim_engine"]
+
+[workspace.dependencies]
 bevy = "0.18.1"
 bevy_egui = "0.39.1"
+
+[dependencies]
+bevy = { workspace = true }
+game_assets = { path = "crates/game_assets" }
+game_core = { path = "crates/game_core" }
+game_ui = { path = "crates/game_ui" }
+vim_engine = { path = "crates/vim_engine" }
 
 [profile.dev]
 opt-level = 1
