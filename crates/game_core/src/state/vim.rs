@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use vim_engine::parser::VimParser;
+use vim_engine::VimParser;
 
 #[derive(Resource, Default)]
 pub struct VimState {
