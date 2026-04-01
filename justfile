@@ -17,3 +17,13 @@ dump_ex:
     echo "==> Generating bevy_egui documentation..."; \
     uv run tools/dump_example.py {{ clone_egui }}/examples bevy_egui_{{ bevy_egui_version }}_examples.md "bevy_egui {{ bevy_egui_version }}"; \
     echo "==> Done! Both markdown files have been generated."
+
+fix-rs:
+    cargo clippy --fix --allow-dirty --allow-staged --all-targets -- -D warnings
+
+fmt-rs:
+    just fix-rs
+    cargo fmt --all
+
+test-rs:
+    cargo test
