@@ -13,10 +13,10 @@ pub fn process_vim_input(
         match result {
             ParseResult::Incomplete => {}
             ParseResult::Success(cmd) => {
-                println!("Success: {:?}", cmd);
+                info!("Vim parse success: {:?}", cmd);
             }
             ParseResult::Invalid(err) => {
-                eprintln!("Error: {}", err);
+                warn!("Vim parse error: {}", err);
             }
         }
     }

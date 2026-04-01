@@ -25,5 +25,9 @@ fmt-rs:
     just fix-rs
     cargo fmt --all
 
+fmt: fmt-rs
+
 test-rs:
-    cargo test
+    cargo test --workspace
+
+test: test-rs
