@@ -18,13 +18,12 @@
 use crate::error::ParseError;
 use crate::parser::result::ParseResult;
 use crate::state::{EditorState, Mode, PendingAction};
+use modes::{insert, normal, operator_pending, visual};
 
-pub mod insert;
 pub mod mapping;
-pub mod normal;
-pub mod operator_pending;
+pub mod modes;
 pub mod result;
-pub mod visual;
+pub mod validation;
 
 /// A stateful parser that translates sequential character inputs into Vim commands.
 ///
@@ -85,7 +84,7 @@ impl VimParser {
 
     fn resolve_pending(&mut self, pending: PendingAction, c: char) -> ParseResult {
         if pending == PendingAction::Register {
-            return if mapping::is_valid_register(c) {
+            return if validation::is_valid_register(c) {
                 self.state.context.register = Some(c);
                 ParseResult::Incomplete
             } else {
