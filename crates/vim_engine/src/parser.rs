@@ -211,4 +211,22 @@ mod tests {
         );
         assert_eq!(parser.state.mode, Mode::Insert);
     }
+
+    #[test]
+    fn test_parser_count_operator_motion() {
+        let mut parser = VimParser::new();
+
+        assert_eq!(parser.feed('3'), ParseResult::Incomplete);
+        assert_eq!(parser.feed('d'), ParseResult::Incomplete);
+
+        if let ParseResult::Success(cmd) = parser.feed('w') {
+            assert_eq!(cmd.context.count, Some(3));
+            assert_eq!(
+                cmd.action,
+                Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward))
+            );
+        } else {
+            panic!("Expected Success result for '3dw' sequence");
+        }
+    }
 }
