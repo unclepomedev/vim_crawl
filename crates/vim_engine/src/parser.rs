@@ -59,8 +59,10 @@ pub mod validation;
 ///
 /// // Input: 'u' (Undo) -> Resolves to Action::Undo with count 3
 /// if let ParseResult::Success(cmd) = parser.feed('u') {
-///     // `cmd.action` is `Action::Undo`
-///     // `cmd.context.count` is `Some(3)`
+///     assert_eq!(cmd.context.count, Some(3));
+///     assert_eq!(cmd.action, vim_engine::ast::action::Action::Undo);
+/// } else {
+///     panic!("Expected Success for '3u'");
 /// }
 /// ```
 #[derive(Default)]

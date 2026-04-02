@@ -239,4 +239,21 @@ mod tests {
 
         assert_eq!(parser.state.context.count, None);
     }
+
+    #[test]
+    fn test_count_standalone_redo_action() {
+        let mut parser = VimParser::new();
+
+        assert_eq!(parser.feed('4'), ParseResult::Incomplete);
+
+        let result = parser.feed('\x12');
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(4));
+            assert_eq!(cmd.action, Action::Redo);
+        } else {
+            panic!("Expected Success");
+        }
+
+        assert_eq!(parser.state.context.count, None);
+    }
 }

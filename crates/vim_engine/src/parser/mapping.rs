@@ -86,10 +86,11 @@ pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
     }
 }
 
+pub const CTRL_R: char = '\x12';
 pub fn parse_standalone_action(c: char) -> Option<Action> {
     match c {
         'u' => Some(Action::Undo),
-        '\x12' => Some(Action::Redo),
+        CTRL_R => Some(Action::Redo),
         _ => None,
     }
 }
