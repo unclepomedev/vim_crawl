@@ -5,6 +5,7 @@ bevy_egui_repo := "https://github.com/mvlabat/bevy_egui.git"
 clone_bevy := "bevy_tmp"
 clone_egui := "bevy_egui_tmp"
 
+# setup ===============================================================================================================
 dump_ex:
     `@set` -e; \
     trap 'rm -rf {{ clone_bevy }} {{ clone_egui }}' EXIT; \
@@ -18,6 +19,7 @@ dump_ex:
     uv run tools/dump_example.py {{ clone_egui }}/examples bevy_egui_{{ bevy_egui_version }}_examples.md "bevy_egui {{ bevy_egui_version }}"; \
     echo "==> Done! Both markdown files have been generated."
 
+# dev ===============================================================================================================
 fix-rs:
     cargo clippy --fix --allow-dirty --allow-staged --all-targets --workspace -- -D warnings
 
@@ -31,3 +33,15 @@ test-rs:
     cargo test --workspace
 
 test: test-rs
+
+# run ===============================================================================================================
+
+# setup example (see also Dockerfile):
+#  brew install trunk
+#  cargo install wasm-server-runner
+#  rustup target add wasm32-unknown-unknown
+run-wasm:
+    trunk serve
+
+run-docker-compose-up-build:
+    docker compose up --build
