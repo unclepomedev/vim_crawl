@@ -2,6 +2,7 @@
 
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
+use crate::state::CommandContext;
 
 pub fn parse_motion(c: char) -> Option<Motion> {
     match c {
@@ -10,6 +11,7 @@ pub fn parse_motion(c: char) -> Option<Motion> {
         'k' => Some(Motion::Up),
         'l' => Some(Motion::Right),
         'w' => Some(Motion::WordForward),
+        '0' => Some(Motion::StartOfLine),
         _ => None,
     }
 }
@@ -20,5 +22,22 @@ pub fn parse_operator(c: char) -> Option<Operator> {
         'y' => Some(Operator::Yank),
         'c' => Some(Operator::Change),
         _ => None,
+    }
+}
+
+/// If the input characters are valid as part of the Count, update the context and return true.
+/// If it's invalid, return false.
+pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
+    if c == '0' && context.count.is_none() {
+        return false;
+    }
+
+    if c.is_ascii_digit() {
+        let digit = c.to_digit(10).unwrap() as usize;
+        let current = context.count.unwrap_or(0);
+        context.count = Some(current * 10 + digit);
+        true
+    } else {
+        false
     }
 }

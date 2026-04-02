@@ -5,5 +5,6 @@ pub enum Motion {
     Up,
     Down,
     WordForward,
+    StartOfLine,
     Find(char),
 }

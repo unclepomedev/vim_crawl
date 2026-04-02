@@ -4,11 +4,15 @@ use crate::ast::operator::Operator;
 use crate::ast::target::Target;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator};
+use crate::parser::mapping::{parse_motion, parse_operator, try_parse_count};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
 pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
+    if try_parse_count(c, &mut parser.state.context) {
+        return ParseResult::Incomplete;
+    }
+
     if let Some(second_op) = parse_operator(c) {
         parser.state.mode = Mode::Normal;
 
@@ -26,7 +30,6 @@ pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
 
     if let Some(motion) = parse_motion(c) {
         parser.state.mode = Mode::Normal;
-
         let action = Action::Operate(op, Target::Motion(motion));
         let command = ParsedCommand {
             context: parser.state.context.clone(),
@@ -132,6 +135,28 @@ mod tests {
         let result = handle(&mut parser, Operator::Delete, 'z');
 
         assert_eq!(result, ParseResult::Invalid(ParseError::InvalidMotion));
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_operator_pending_with_count() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Delete);
+
+        let result1 = handle(&mut parser, Operator::Delete, '3');
+        assert_eq!(result1, ParseResult::Incomplete);
+
+        let result2 = handle(&mut parser, Operator::Delete, 'w');
+        assert_eq!(
+            result2,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext {
+                    count: Some(3),
+                    register: None
+                },
+                action: Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward)),
+            })
+        );
         assert_eq!(parser.state.mode, Mode::Normal);
     }
 }

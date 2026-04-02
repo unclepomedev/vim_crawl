@@ -19,11 +19,20 @@ impl VimParser {
     }
 
     pub fn feed(&mut self, c: char) -> ParseResult {
-        match self.state.mode {
+        let result = match self.state.mode {
             Mode::Normal => normal::handle(self, c),
             Mode::Insert => insert::handle(self, c),
             Mode::Visual => visual::handle(self, c),
             Mode::OperatorPending(op) => operator_pending::handle(self, op, c),
+        };
+
+        match result {
+            ParseResult::Success(_) | ParseResult::Invalid(_) => {
+                self.state.context.count = None;
+            }
+            ParseResult::Incomplete => {}
         }
+
+        result
     }
 }
