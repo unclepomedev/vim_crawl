@@ -1,8 +1,9 @@
 use crate::ast::action::Action;
 use crate::ast::command::ParsedCommand;
+use crate::ast::motion::Motion;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator, try_parse_count};
+use crate::parser::mapping::{parse_motion, parse_operator, parse_pending_action, try_parse_count};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
@@ -17,16 +18,25 @@ pub fn handle(parser: &mut VimParser, c: char) -> ParseResult {
         return ParseResult::Incomplete;
     }
 
+    if let Some(pending) = parse_pending_action(c) {
+        parser.state.context.pending_action = Some(pending);
+        return ParseResult::Incomplete;
+    }
+
     if let Some(motion) = parse_motion(c) {
-        let action = Action::Move(motion);
-        let command = ParsedCommand {
-            context: parser.state.context.clone(),
-            action,
-        };
-        return ParseResult::Success(command);
+        return handle_motion(parser, motion);
     }
 
     ParseResult::Invalid(ParseError::UnknownCommand)
+}
+
+pub fn handle_motion(parser: &mut VimParser, motion: Motion) -> ParseResult {
+    let action = Action::Move(motion);
+    let command = ParsedCommand {
+        context: parser.state.context.clone(),
+        action,
+    };
+    ParseResult::Success(command)
 }
 
 #[cfg(test)]
@@ -35,7 +45,7 @@ mod tests {
     use crate::ast::motion::Motion;
     use crate::ast::operator::Operator;
     use crate::ast::target::Target;
-    use crate::state::CommandContext;
+    use crate::state::{CommandContext, PendingAction};
 
     #[test]
     fn test_normal_mode_motions() {
@@ -164,5 +174,18 @@ mod tests {
         } else {
             panic!("Expected Success");
         }
+    }
+
+    #[test]
+    fn test_normal_mode_pending_action() {
+        let mut parser = VimParser::new();
+        let result = handle(&mut parser, 'f');
+
+        assert_eq!(result, ParseResult::Incomplete);
+        assert_eq!(
+            parser.state.context.pending_action,
+            Some(PendingAction::FindForward)
+        );
+        assert_eq!(parser.state.mode, Mode::Normal);
     }
 }

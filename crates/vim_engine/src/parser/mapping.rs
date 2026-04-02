@@ -2,7 +2,7 @@
 
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
-use crate::state::CommandContext;
+use crate::state::{CommandContext, PendingAction};
 
 pub fn parse_motion(c: char) -> Option<Motion> {
     match c {
@@ -23,6 +23,16 @@ pub fn parse_operator(c: char) -> Option<Operator> {
         'd' => Some(Operator::Delete),
         'y' => Some(Operator::Yank),
         'c' => Some(Operator::Change),
+        _ => None,
+    }
+}
+
+pub fn parse_pending_action(c: char) -> Option<PendingAction> {
+    match c {
+        'f' => Some(PendingAction::FindForward),
+        'F' => Some(PendingAction::FindBackward),
+        't' => Some(PendingAction::TillForward),
+        'T' => Some(PendingAction::TillBackward),
         _ => None,
     }
 }
