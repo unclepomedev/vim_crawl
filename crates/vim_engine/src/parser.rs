@@ -1,3 +1,4 @@
+use crate::ParseError;
 use crate::ast::motion::Motion;
 use crate::parser::result::ParseResult;
 use crate::state::{EditorState, Mode, PendingAction};
@@ -46,7 +47,8 @@ impl VimParser {
         match self.state.mode {
             Mode::Normal => normal::handle_motion(self, motion),
             Mode::OperatorPending(op) => operator_pending::handle_motion(self, op, motion),
-            _ => ParseResult::Incomplete,
+            Mode::Visual => ParseResult::Incomplete, // TODO: When implementing Visual mode, delegate to visual::handle_motion.
+            Mode::Insert => ParseResult::Invalid(ParseError::UnknownCommand),
         }
     }
 
