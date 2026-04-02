@@ -5,4 +5,5 @@ use crate::ast::text_object::TextObject;
 pub enum Target {
     Motion(Motion),
     TextObject(TextObject),
+    Line,
 }

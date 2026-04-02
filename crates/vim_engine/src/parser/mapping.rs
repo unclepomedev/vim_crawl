@@ -1,3 +1,5 @@
+//! Map a character to an AST node.
+
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
 
