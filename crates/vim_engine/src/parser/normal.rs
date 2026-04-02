@@ -39,6 +39,7 @@ pub fn handle_motion(parser: &mut VimParser, motion: Motion) -> ParseResult {
     ParseResult::Success(command)
 }
 
+// Unit Tests ======================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -109,6 +109,7 @@ pub fn handle_text_object(
     ParseResult::Success(command)
 }
 
+// Unit Tests ======================================================================================
 #[cfg(test)]
 mod tests {
     use super::*;
