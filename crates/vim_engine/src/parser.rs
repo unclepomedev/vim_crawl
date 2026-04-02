@@ -70,7 +70,10 @@ impl VimParser {
         if mapping::is_cancel_key(key) {
             self.state.mode = Mode::Normal;
             self.state.context.reset();
-            return ParseResult::Invalid(ParseError::UnknownCommand);
+            return ParseResult::Success(crate::ast::command::ParsedCommand {
+                context: crate::state::CommandContext::default(),
+                action: crate::ast::action::Action::Cancel,
+            });
         }
 
         let result = if let Some(pending) = self.state.context.pending_action.take() {
@@ -307,7 +310,13 @@ mod tests {
 
         let res = parser.feed(Key::Esc);
 
-        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(
+            res,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Cancel,
+            })
+        );
         assert_eq!(parser.state.mode, Mode::Normal);
     }
 
@@ -323,7 +332,13 @@ mod tests {
 
         let res = parser.feed(Key::Ctrl('c'));
 
-        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(
+            res,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Cancel,
+            })
+        );
         assert_eq!(parser.state.mode, Mode::Normal);
         assert_eq!(parser.state.context.count, None);
         assert_eq!(parser.state.context.operator_count, None);

@@ -11,6 +11,8 @@ pub fn handle(_parser: &mut VimParser, key: Key) -> ParseResult {
             action: Action::Insert(c.to_string()),
         })
     } else {
-        ParseResult::Incomplete
+        // Unsupported keys in insert mode should signal an error
+        // TODO: Add support for Backspace, arrow keys, etc.
+        ParseResult::Invalid(crate::error::ParseError::UnknownCommand)
     }
 }
