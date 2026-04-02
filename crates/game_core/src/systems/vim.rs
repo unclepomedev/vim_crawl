@@ -2,6 +2,7 @@ use crate::message::VimInputMessage;
 use crate::state::vim::VimState;
 use bevy::prelude::*;
 use vim_engine::ParseResult;
+use vim_engine::ast::action::Action;
 use vim_engine::ast::command::ParsedCommand;
 
 pub fn process_vim_input(
@@ -23,6 +24,16 @@ pub fn process_vim_input(
     }
 }
 
-fn handle_command(_vim_state: &mut VimState, cmd: ParsedCommand) {
-    debug!("Action parsed: {:?}", std::mem::discriminant(&cmd.action));
+fn handle_command(vim_state: &mut VimState, cmd: ParsedCommand) {
+    match cmd.action {
+        Action::Insert(text) => {
+            vim_state.buffer.push_str(&text);
+        }
+        Action::Backspace => {
+            vim_state.buffer.pop();
+        }
+        _ => {
+            debug!("Action parsed: {:?}", std::mem::discriminant(&cmd.action));
+        }
+    }
 }

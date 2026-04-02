@@ -5340,6 +5340,7 @@ name = "vim_crawl"
 version = "0.0.1"
 dependencies = [
  "bevy",
+ "bevy_egui",
  "game_assets",
  "game_core",
  "game_ui",
