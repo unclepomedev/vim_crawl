@@ -11,4 +11,6 @@ pub enum Action {
     MacroExecute(char),
     Undo,
     Redo,
+    EnterInsert,
+    EnterVisual,
 }

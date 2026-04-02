@@ -15,6 +15,20 @@ pub fn handle(parser: &mut VimParser, key: Key) -> ParseResult {
         return ParseResult::Incomplete;
     }
 
+    if let Some(action) = parse_standalone_action(key) {
+        match action {
+            Action::EnterInsert => parser.state.mode = Mode::Insert,
+            Action::EnterVisual => parser.state.mode = Mode::Visual,
+            _ => {}
+        }
+
+        let command = ParsedCommand {
+            context: parser.state.context.clone(),
+            action,
+        };
+        return ParseResult::Success(command);
+    }
+
     if let Some(op) = parse_operator(key) {
         parser.state.context.operator_count = parser.state.context.count.take();
         parser.state.mode = Mode::OperatorPending(op);
@@ -24,14 +38,6 @@ pub fn handle(parser: &mut VimParser, key: Key) -> ParseResult {
     if let Some(pending) = parse_pending_action(key) {
         parser.state.context.pending_action = Some(pending);
         return ParseResult::Incomplete;
-    }
-
-    if let Some(action) = parse_standalone_action(key) {
-        let command = ParsedCommand {
-            context: parser.state.context.clone(),
-            action,
-        };
-        return ParseResult::Success(command);
     }
 
     if let Some(motion) = parse_motion(key) {
@@ -94,6 +100,38 @@ mod tests {
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
+    }
+
+    #[test]
+    fn test_normal_mode_enter_insert() {
+        let mut parser = VimParser::new();
+
+        let result = handle(&mut parser, Key::Char('i'));
+
+        assert_eq!(
+            result,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::EnterInsert,
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Insert);
+    }
+
+    #[test]
+    fn test_normal_mode_enter_visual() {
+        let mut parser = VimParser::new();
+
+        let result = handle(&mut parser, Key::Char('v'));
+
+        assert_eq!(
+            result,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::EnterVisual,
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Visual);
     }
 
     #[test]

@@ -67,6 +67,12 @@ impl VimParser {
     }
 
     pub fn feed(&mut self, key: Key) -> ParseResult {
+        if mapping::is_cancel_key(key) {
+            self.state.mode = Mode::Normal;
+            self.state.context.reset();
+            return ParseResult::Invalid(ParseError::UnknownCommand);
+        }
+
         let result = if let Some(pending) = self.state.context.pending_action.take() {
             self.resolve_pending(pending, key)
         } else {
@@ -290,5 +296,36 @@ mod tests {
         assert_eq!(parser.state.context.pending_action, None);
         assert_eq!(parser.state.context.register, None);
         assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_parser_cancel_from_insert_mode() {
+        let mut parser = VimParser::new();
+
+        parser.feed(Key::Char('i'));
+        assert_eq!(parser.state.mode, Mode::Insert);
+
+        let res = parser.feed(Key::Esc);
+
+        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_parser_cancel_pending_state() {
+        let mut parser = VimParser::new();
+
+        parser.feed(Key::Char('3'));
+        parser.feed(Key::Char('d'));
+        assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
+
+        assert_eq!(parser.state.context.operator_count, Some(3));
+
+        let res = parser.feed(Key::Ctrl('c'));
+
+        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(parser.state.mode, Mode::Normal);
+        assert_eq!(parser.state.context.count, None);
+        assert_eq!(parser.state.context.operator_count, None);
     }
 }
