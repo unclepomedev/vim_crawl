@@ -15,9 +15,12 @@
 //!   parser automatically resets its temporary context (counts, pending actions) while preserving
 //!   the appropriate mode transitions.
 
+use crate::ast::action::Action;
+use crate::ast::command::ParsedCommand;
 use crate::error::ParseError;
 use crate::parser::key::Key;
 use crate::parser::result::ParseResult;
+use crate::state::CommandContext;
 use crate::state::{EditorState, Mode, PendingAction};
 use modes::{insert, normal, operator_pending, visual};
 
@@ -70,9 +73,9 @@ impl VimParser {
         if mapping::is_cancel_key(key) {
             self.state.mode = Mode::Normal;
             self.state.context.reset();
-            return ParseResult::Success(crate::ast::command::ParsedCommand {
-                context: crate::state::CommandContext::default(),
-                action: crate::ast::action::Action::Cancel,
+            return ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Cancel,
             });
         }
 

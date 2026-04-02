@@ -7,6 +7,7 @@ pub enum ParseError {
     InvalidMotion,
     InvalidRegister,
     MacroNotFound,
+    UnsupportedKey,
 }
 
 impl fmt::Display for ParseError {
@@ -16,6 +17,7 @@ impl fmt::Display for ParseError {
             Self::InvalidMotion => write!(f, "invalid motion"),
             Self::InvalidRegister => write!(f, "invalid register"),
             Self::MacroNotFound => write!(f, "macro not found"),
+            Self::UnsupportedKey => write!(f, "Unsupported key"),
         }
     }
 }

@@ -11,16 +11,17 @@ use crate::parser::mapping::{
     parse_motion, parse_operator, parse_pending_action, parse_text_object_modifier, try_parse_count,
 };
 use crate::parser::result::ParseResult;
+use crate::state::CommandContext;
 use crate::state::Mode;
 
-fn combined_context(ctx: &crate::state::CommandContext) -> crate::state::CommandContext {
+fn combined_context(ctx: &CommandContext) -> CommandContext {
     let combined = match (ctx.operator_count, ctx.count) {
         (Some(a), Some(b)) => Some(a.saturating_mul(b)),
         (Some(a), None) => Some(a),
         (None, Some(b)) => Some(b),
         (None, None) => None,
     };
-    crate::state::CommandContext {
+    CommandContext {
         count: combined,
         operator_count: None,
         register: ctx.register,
