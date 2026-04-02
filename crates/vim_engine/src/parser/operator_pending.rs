@@ -80,6 +80,23 @@ mod tests {
     }
 
     #[test]
+    fn test_operator_pending_line_wise_cc() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Change);
+
+        let result = handle(&mut parser, Operator::Change, 'c');
+
+        assert_eq!(
+            result,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Operate(Operator::Change, Target::Line),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
     fn test_operator_pending_invalid_dy() {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
