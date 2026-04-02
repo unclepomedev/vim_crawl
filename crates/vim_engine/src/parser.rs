@@ -47,7 +47,7 @@ impl VimParser {
         match self.state.mode {
             Mode::Normal => normal::handle_motion(self, motion),
             Mode::OperatorPending(op) => operator_pending::handle_motion(self, op, motion),
-            Mode::Visual => ParseResult::Incomplete, // TODO: When implementing Visual mode, delegate to visual::handle_motion.
+            Mode::Visual => unreachable!("Visual mode does not yet support pending actions"),
             Mode::Insert => ParseResult::Invalid(ParseError::UnknownCommand),
         }
     }
