@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_count_motion() {
         let mut parser = VimParser::new();
-        parser.feed('3');
+        assert_eq!(parser.feed('3'), ParseResult::Incomplete);
         let result = parser.feed('w');
 
         if let ParseResult::Success(cmd) = result {
@@ -103,7 +103,7 @@ mod tests {
     #[test]
     fn test_zero_as_motion() {
         let mut parser = VimParser::new();
-        let result = handle(&mut parser, '0');
+        let result = parser.feed('0');
 
         assert_eq!(
             result,
@@ -112,6 +112,7 @@ mod tests {
                 action: Action::Move(Motion::StartOfLine),
             })
         );
+        assert_eq!(parser.state.context.count, None);
     }
 
     #[test]
