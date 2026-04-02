@@ -28,7 +28,7 @@ impl VimParser {
 
         match result {
             ParseResult::Success(_) | ParseResult::Invalid(_) => {
-                self.state.context.count = None;
+                self.state.context.reset();
             }
             ParseResult::Incomplete => {}
         }

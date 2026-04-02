@@ -12,6 +12,7 @@ pub fn handle(parser: &mut VimParser, c: char) -> ParseResult {
     }
 
     if let Some(op) = parse_operator(c) {
+        parser.state.context.operator_count = parser.state.context.count.take();
         parser.state.mode = Mode::OperatorPending(op);
         return ParseResult::Incomplete;
     }
@@ -125,6 +126,28 @@ mod tests {
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(parser.state.context.count, Some(10));
+    }
+
+    #[test]
+    fn test_operator_count_times_motion_count() {
+        let mut parser = VimParser::new();
+        parser.feed('3');
+        parser.feed('d');
+        let result = parser.feed('2');
+        assert_eq!(result, ParseResult::Incomplete);
+        let result = parser.feed('w');
+
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(6));
+            assert_eq!(
+                cmd.action,
+                Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward))
+            );
+        } else {
+            panic!("Expected Success, 3d2w should delete 6 words");
+        }
+        assert_eq!(parser.state.context.count, None);
+        assert_eq!(parser.state.context.operator_count, None);
     }
 
     #[test]

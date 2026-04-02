@@ -8,6 +8,20 @@ use crate::parser::mapping::{parse_motion, parse_operator, try_parse_count};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
+fn combined_context(ctx: &crate::state::CommandContext) -> crate::state::CommandContext {
+    let combined = match (ctx.operator_count, ctx.count) {
+        (Some(a), Some(b)) => Some(a * b),
+        (Some(a), None) => Some(a),
+        (None, Some(b)) => Some(b),
+        (None, None) => None,
+    };
+    crate::state::CommandContext {
+        count: combined,
+        operator_count: None,
+        register: ctx.register,
+    }
+}
+
 pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
     if try_parse_count(c, &mut parser.state.context) {
         return ParseResult::Incomplete;
@@ -19,7 +33,7 @@ pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
         return if op == second_op {
             let action = Action::Operate(op, Target::Line);
             let command = ParsedCommand {
-                context: parser.state.context.clone(),
+                context: combined_context(&parser.state.context),
                 action,
             };
             ParseResult::Success(command)
@@ -32,7 +46,7 @@ pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
         parser.state.mode = Mode::Normal;
         let action = Action::Operate(op, Target::Motion(motion));
         let command = ParsedCommand {
-            context: parser.state.context.clone(),
+            context: combined_context(&parser.state.context),
             action,
         };
         return ParseResult::Success(command);
@@ -152,6 +166,7 @@ mod tests {
             ParseResult::Success(ParsedCommand {
                 context: CommandContext {
                     count: Some(3),
+                    operator_count: None,
                     register: None
                 },
                 action: Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward)),
