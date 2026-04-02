@@ -4,51 +4,57 @@ use crate::ast::action::Action;
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
 use crate::ast::text_object::TextObject;
+use crate::parser::key::Key;
 use crate::state::{CommandContext, PendingAction};
 
-pub fn parse_motion(c: char) -> Option<Motion> {
-    match c {
-        'h' => Some(Motion::Left),
-        'j' => Some(Motion::Down),
-        'k' => Some(Motion::Up),
-        'l' => Some(Motion::Right),
-        'w' => Some(Motion::WordForward),
-        'b' => Some(Motion::WordBackward),
-        '$' => Some(Motion::EndOfLine),
-        '0' => Some(Motion::StartOfLine),
+pub fn parse_motion(key: Key) -> Option<Motion> {
+    match key {
+        Key::Char('h') => Some(Motion::Left),
+        Key::Char('j') => Some(Motion::Down),
+        Key::Char('k') => Some(Motion::Up),
+        Key::Char('l') => Some(Motion::Right),
+        Key::Char('w') => Some(Motion::WordForward),
+        Key::Char('b') => Some(Motion::WordBackward),
+        Key::Char('$') => Some(Motion::EndOfLine),
+        Key::Char('0') => Some(Motion::StartOfLine),
         _ => None,
     }
 }
 
-pub fn parse_operator(c: char) -> Option<Operator> {
-    match c {
-        'd' => Some(Operator::Delete),
-        'y' => Some(Operator::Yank),
-        'c' => Some(Operator::Change),
+pub fn parse_operator(key: Key) -> Option<Operator> {
+    match key {
+        Key::Char('d') => Some(Operator::Delete),
+        Key::Char('y') => Some(Operator::Yank),
+        Key::Char('c') => Some(Operator::Change),
         _ => None,
     }
 }
 
-pub fn parse_pending_action(c: char) -> Option<PendingAction> {
-    match c {
-        'f' => Some(PendingAction::FindForward),
-        'F' => Some(PendingAction::FindBackward),
-        't' => Some(PendingAction::TillForward),
-        'T' => Some(PendingAction::TillBackward),
-        '"' => Some(PendingAction::Register),
+pub fn parse_pending_action(key: Key) -> Option<PendingAction> {
+    match key {
+        Key::Char('f') => Some(PendingAction::FindForward),
+        Key::Char('F') => Some(PendingAction::FindBackward),
+        Key::Char('t') => Some(PendingAction::TillForward),
+        Key::Char('T') => Some(PendingAction::TillBackward),
+        Key::Char('"') => Some(PendingAction::Register),
         _ => None,
     }
 }
 
-pub fn parse_text_object_modifier(c: char) -> Option<PendingAction> {
-    match c {
-        'i' => Some(PendingAction::Inner),
-        'a' => Some(PendingAction::Around),
+pub fn parse_text_object_modifier(key: Key) -> Option<PendingAction> {
+    match key {
+        Key::Char('i') => Some(PendingAction::Inner),
+        Key::Char('a') => Some(PendingAction::Around),
         _ => None,
     }
 }
 
-pub fn parse_pending_motion(pending: PendingAction, c: char) -> Option<Motion> {
+pub fn parse_pending_motion(pending: PendingAction, key: Key) -> Option<Motion> {
+    let c = match key {
+        Key::Char(c) => c,
+        _ => return None,
+    };
+
     match pending {
         PendingAction::FindForward => Some(Motion::FindForward(c)),
         PendingAction::FindBackward => Some(Motion::FindBackward(c)),
@@ -58,17 +64,22 @@ pub fn parse_pending_motion(pending: PendingAction, c: char) -> Option<Motion> {
     }
 }
 
-pub fn parse_text_object(pending: PendingAction, c: char) -> Option<TextObject> {
-    match (pending, c) {
-        (PendingAction::Inner, 'w') => Some(TextObject::InnerWord),
-        (PendingAction::Around, 'w') => Some(TextObject::AWord),
+pub fn parse_text_object(pending: PendingAction, key: Key) -> Option<TextObject> {
+    match (pending, key) {
+        (PendingAction::Inner, Key::Char('w')) => Some(TextObject::InnerWord),
+        (PendingAction::Around, Key::Char('w')) => Some(TextObject::AWord),
         _ => None,
     }
 }
 
 /// If the input characters are valid as part of the Count, update the context and return true.
 /// If it's invalid, return false.
-pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
+pub fn try_parse_count(key: Key, context: &mut CommandContext) -> bool {
+    let c = match key {
+        Key::Char(c) => c,
+        _ => return false,
+    };
+
     if c == '0' && context.count.is_none() {
         return false;
     }
@@ -86,11 +97,10 @@ pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
     }
 }
 
-pub const CTRL_R: char = '\x12';
-pub fn parse_standalone_action(c: char) -> Option<Action> {
-    match c {
-        'u' => Some(Action::Undo),
-        CTRL_R => Some(Action::Redo),
+pub fn parse_standalone_action(key: Key) -> Option<Action> {
+    match key {
+        Key::Char('u') => Some(Action::Undo),
+        Key::Ctrl('r') => Some(Action::Redo),
         _ => None,
     }
 }

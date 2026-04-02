@@ -16,49 +16,40 @@
 //!   the appropriate mode transitions.
 
 use crate::error::ParseError;
+use crate::parser::key::Key;
 use crate::parser::result::ParseResult;
 use crate::state::{EditorState, Mode, PendingAction};
 use modes::{insert, normal, operator_pending, visual};
 
+pub mod key;
 pub mod mapping;
 pub mod modes;
 pub mod result;
 pub mod validation;
 
-/// A stateful parser that translates sequential character inputs into Vim commands.
+/// A stateful parser that translates sequential keystrokes into Vim commands.
 ///
-/// `VimParser` acts as a finite state machine, interpreting keystrokes based on standard
+/// `VimParser` acts as a finite state machine, interpreting keys based on standard
 /// Vim grammar. It handles basic motions, operators, counts (multipliers), text objects,
 /// and pending actions.
 ///
 /// # Input Encoding Contract
 ///
-/// The `feed` method expects raw keystrokes to be passed as `char`. To decouple the parser
-/// from specific windowing or UI frameworks (like Bevy or Winit), clients must map physical
-/// key events to the following standard ASCII control characters before passing them to `feed`:
-///
-/// * **Printable Characters**: Passed as-is (e.g., `'a'`, `'D'`, `'3'`, `'$'`).
-/// * **Control Characters (`<C-X>`)**: Mapped to ASCII values `\x01` through `\x1A`.
-///   * Example: `<C-r>` (Redo) -> `\x12`
-///   * Example: `<C-d>` (Page Down) -> `\x04`
-///   * Example: `<C-v>` (Visual Block) -> `\x16`
-/// * **Special Keys**:
-///   * `<Esc>` -> `\x1b`
-///   * `<CR>` (Enter) -> `\r` or `\n`
+/// The `feed` method expects inputs as variants of the `Key` enum. Clients must map
+/// physical key events to the `Key` variants before passing them to `feed`.
 ///
 /// # Examples
 ///
 /// ```
 /// use vim_engine::parser::VimParser;
 /// use vim_engine::parser::result::ParseResult;
+/// use vim_engine::parser::key::Key;
 ///
 /// let mut parser = VimParser::new();
 ///
-/// // Input: '3' (Count)
-/// assert_eq!(parser.feed('3'), ParseResult::Incomplete);
+/// assert_eq!(parser.feed(Key::Char('3')), ParseResult::Incomplete);
 ///
-/// // Input: 'u' (Undo) -> Resolves to Action::Undo with count 3
-/// if let ParseResult::Success(cmd) = parser.feed('u') {
+/// if let ParseResult::Success(cmd) = parser.feed(Key::Char('u')) {
 ///     assert_eq!(cmd.context.count, Some(3));
 ///     assert_eq!(cmd.action, vim_engine::ast::action::Action::Undo);
 /// } else {
@@ -75,11 +66,11 @@ impl VimParser {
         Self::default()
     }
 
-    pub fn feed(&mut self, c: char) -> ParseResult {
+    pub fn feed(&mut self, key: Key) -> ParseResult {
         let result = if let Some(pending) = self.state.context.pending_action.take() {
-            self.resolve_pending(pending, c)
+            self.resolve_pending(pending, key)
         } else {
-            self.route_input(c)
+            self.route_input(key)
         };
 
         match result {
@@ -92,18 +83,19 @@ impl VimParser {
         result
     }
 
-    fn resolve_pending(&mut self, pending: PendingAction, c: char) -> ParseResult {
+    fn resolve_pending(&mut self, pending: PendingAction, key: Key) -> ParseResult {
         if pending == PendingAction::Register {
-            return if validation::is_valid_register(c) {
+            if let Key::Char(c) = key
+                && validation::is_valid_register(c)
+            {
                 self.state.context.register = Some(c);
-                ParseResult::Incomplete
-            } else {
-                self.state.mode = Mode::Normal;
-                ParseResult::Invalid(ParseError::UnknownCommand)
-            };
+                return ParseResult::Incomplete;
+            }
+            self.state.mode = Mode::Normal;
+            return ParseResult::Invalid(ParseError::UnknownCommand);
         }
 
-        if let Some(motion) = mapping::parse_pending_motion(pending, c) {
+        if let Some(motion) = mapping::parse_pending_motion(pending, key) {
             return match self.state.mode {
                 Mode::Normal => normal::handle_motion(self, motion),
                 Mode::OperatorPending(op) => operator_pending::handle_motion(self, op, motion),
@@ -112,7 +104,7 @@ impl VimParser {
             };
         }
 
-        if let Some(text_obj) = mapping::parse_text_object(pending, c) {
+        if let Some(text_obj) = mapping::parse_text_object(pending, key) {
             return match self.state.mode {
                 Mode::OperatorPending(op) => {
                     operator_pending::handle_text_object(self, op, text_obj)
@@ -126,12 +118,12 @@ impl VimParser {
         ParseResult::Invalid(ParseError::InvalidMotion)
     }
 
-    fn route_input(&mut self, c: char) -> ParseResult {
+    fn route_input(&mut self, key: Key) -> ParseResult {
         match self.state.mode {
-            Mode::Normal => normal::handle(self, c),
-            Mode::Insert => insert::handle(self, c),
-            Mode::Visual => visual::handle(self, c),
-            Mode::OperatorPending(op) => operator_pending::handle(self, op, c),
+            Mode::Normal => normal::handle(self, key),
+            Mode::Insert => insert::handle(self, key),
+            Mode::Visual => visual::handle(self, key),
+            Mode::OperatorPending(op) => operator_pending::handle(self, op, key),
         }
     }
 }
@@ -152,14 +144,14 @@ mod tests {
     fn test_parser_feed_pending_motion() {
         let mut parser = VimParser::new();
 
-        let res1 = parser.feed('f');
+        let res1 = parser.feed(Key::Char('f'));
         assert_eq!(res1, ParseResult::Incomplete);
         assert_eq!(
             parser.state.context.pending_action,
             Some(PendingAction::FindForward)
         );
 
-        let res2 = parser.feed('x');
+        let res2 = parser.feed(Key::Char('x'));
         assert_eq!(
             res2,
             ParseResult::Success(ParsedCommand {
@@ -175,18 +167,18 @@ mod tests {
     fn test_parser_feed_text_object() {
         let mut parser = VimParser::new();
 
-        let res1 = parser.feed('d');
+        let res1 = parser.feed(Key::Char('d'));
         assert_eq!(res1, ParseResult::Incomplete);
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
 
-        let res2 = parser.feed('i');
+        let res2 = parser.feed(Key::Char('i'));
         assert_eq!(res2, ParseResult::Incomplete);
         assert_eq!(
             parser.state.context.pending_action,
             Some(PendingAction::Inner)
         );
 
-        let res3 = parser.feed('w');
+        let res3 = parser.feed(Key::Char('w'));
         assert_eq!(
             res3,
             ParseResult::Success(ParsedCommand {
@@ -205,9 +197,9 @@ mod tests {
     fn test_parser_feed_invalid_text_object() {
         let mut parser = VimParser::new();
 
-        parser.feed('d');
-        parser.feed('i');
-        let res3 = parser.feed('z');
+        parser.feed(Key::Char('d'));
+        parser.feed(Key::Char('i'));
+        let res3 = parser.feed(Key::Char('z'));
 
         assert_eq!(res3, ParseResult::Invalid(ParseError::InvalidMotion));
         assert_eq!(parser.state.context.pending_action, None);
@@ -218,9 +210,9 @@ mod tests {
     fn test_parser_feed_change_text_object() {
         let mut parser = VimParser::new();
 
-        parser.feed('c');
-        parser.feed('a');
-        let res3 = parser.feed('w');
+        parser.feed(Key::Char('c'));
+        parser.feed(Key::Char('a'));
+        let res3 = parser.feed(Key::Char('w'));
 
         assert_eq!(
             res3,
@@ -236,10 +228,10 @@ mod tests {
     fn test_parser_count_operator_motion() {
         let mut parser = VimParser::new();
 
-        assert_eq!(parser.feed('3'), ParseResult::Incomplete);
-        assert_eq!(parser.feed('d'), ParseResult::Incomplete);
+        assert_eq!(parser.feed(Key::Char('3')), ParseResult::Incomplete);
+        assert_eq!(parser.feed(Key::Char('d')), ParseResult::Incomplete);
 
-        if let ParseResult::Success(cmd) = parser.feed('w') {
+        if let ParseResult::Success(cmd) = parser.feed(Key::Char('w')) {
             assert_eq!(cmd.context.count, Some(3));
             assert_eq!(
                 cmd.action,
@@ -254,23 +246,23 @@ mod tests {
     fn test_parser_feed_register_and_operator() {
         let mut parser = VimParser::new();
 
-        let res1 = parser.feed('"');
+        let res1 = parser.feed(Key::Char('"'));
         assert_eq!(res1, ParseResult::Incomplete);
         assert_eq!(
             parser.state.context.pending_action,
             Some(PendingAction::Register)
         );
 
-        let res2 = parser.feed('+');
+        let res2 = parser.feed(Key::Char('+'));
         assert_eq!(res2, ParseResult::Incomplete);
         assert_eq!(parser.state.context.pending_action, None);
         assert_eq!(parser.state.context.register, Some('+'));
 
-        let res3 = parser.feed('d');
+        let res3 = parser.feed(Key::Char('d'));
         assert_eq!(res3, ParseResult::Incomplete);
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
 
-        let res4 = parser.feed('w');
+        let res4 = parser.feed(Key::Char('w'));
         assert_eq!(
             res4,
             ParseResult::Success(ParsedCommand {
@@ -291,8 +283,8 @@ mod tests {
     #[test]
     fn test_parser_feed_invalid_register() {
         let mut parser = VimParser::new();
-        parser.feed('"');
-        let res = parser.feed(' ');
+        parser.feed(Key::Char('"'));
+        let res = parser.feed(Key::Char(' '));
 
         assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
         assert_eq!(parser.state.context.pending_action, None);
