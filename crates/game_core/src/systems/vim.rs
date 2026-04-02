@@ -2,6 +2,7 @@ use crate::message::VimInputMessage;
 use crate::state::vim::VimState;
 use bevy::prelude::*;
 use vim_engine::ParseResult;
+use vim_engine::ast::command::ParsedCommand;
 
 pub fn process_vim_input(
     mut vim_input_reader: MessageReader<VimInputMessage>,
@@ -13,11 +14,15 @@ pub fn process_vim_input(
         match result {
             ParseResult::Incomplete => {}
             ParseResult::Success(cmd) => {
-                info!("Vim parse success: {:?}", cmd);
+                handle_command(&mut vim_state, cmd);
             }
             ParseResult::Invalid(err) => {
-                warn!("Vim parse error: {}", err);
+                trace!("Vim parse error: {}", err);
             }
         }
     }
+}
+
+fn handle_command(_vim_state: &mut VimState, cmd: ParsedCommand) {
+    debug!("Action parsed: {:?}", std::mem::discriminant(&cmd.action));
 }

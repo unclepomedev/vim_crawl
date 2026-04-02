@@ -101,6 +101,12 @@ pub fn parse_standalone_action(key: Key) -> Option<Action> {
     match key {
         Key::Char('u') => Some(Action::Undo),
         Key::Ctrl('r') => Some(Action::Redo),
+        Key::Char('i') => Some(Action::EnterInsert),
+        Key::Char('v') => Some(Action::EnterVisual),
         _ => None,
     }
+}
+
+pub fn is_cancel_key(key: Key) -> bool {
+    matches!(key, Key::Esc | Key::Ctrl('c'))
 }
