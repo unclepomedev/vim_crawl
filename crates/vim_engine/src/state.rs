@@ -1,8 +1,11 @@
+use crate::ast::operator::Operator;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Normal,
     Insert,
     Visual,
+    OperatorPending(Operator),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

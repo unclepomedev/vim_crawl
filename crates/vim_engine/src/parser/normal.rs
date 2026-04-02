@@ -1,35 +1,38 @@
 use crate::ast::action::Action;
 use crate::ast::command::ParsedCommand;
-use crate::ast::motion::Motion;
 use crate::error::ParseError;
 use crate::parser::VimParser;
+use crate::parser::mapping::{parse_motion, parse_operator};
 use crate::parser::result::ParseResult;
+use crate::state::Mode;
 
 pub fn handle(parser: &mut VimParser, c: char) -> ParseResult {
-    let motion = match c {
-        'h' => Motion::Left,
-        'j' => Motion::Down,
-        'k' => Motion::Up,
-        'l' => Motion::Right,
-        _ => return ParseResult::Invalid(ParseError::UnknownCommand),
-    };
+    if let Some(op) = parse_operator(c) {
+        parser.state.mode = Mode::OperatorPending(op);
+        return ParseResult::Incomplete;
+    }
 
-    let action = Action::Move(motion);
-    let command = ParsedCommand {
-        context: parser.state.context.clone(),
-        action,
-    };
+    if let Some(motion) = parse_motion(c) {
+        let action = Action::Move(motion);
+        let command = ParsedCommand {
+            context: parser.state.context.clone(),
+            action,
+        };
+        return ParseResult::Success(command);
+    }
 
-    ParseResult::Success(command)
+    ParseResult::Invalid(ParseError::UnknownCommand)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::motion::Motion;
+    use crate::ast::operator::Operator;
     use crate::state::CommandContext;
 
     #[test]
-    fn test_normal_mode_hjkl() {
+    fn test_normal_mode_motions() {
         let mut parser = VimParser::new();
 
         let test_cases = vec![
@@ -37,6 +40,7 @@ mod tests {
             ('j', Motion::Down),
             ('k', Motion::Up),
             ('l', Motion::Right),
+            ('w', Motion::WordForward),
         ];
 
         for (input, expected_motion) in test_cases {
@@ -52,9 +56,12 @@ mod tests {
     }
 
     #[test]
-    fn test_normal_mode_invalid_command() {
+    fn test_normal_mode_operator_transition() {
         let mut parser = VimParser::new();
-        let result = handle(&mut parser, 'z');
-        assert_eq!(result, ParseResult::Invalid(ParseError::UnknownCommand));
+
+        let result = handle(&mut parser, 'd');
+
+        assert_eq!(result, ParseResult::Incomplete);
+        assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
     }
 }
