@@ -8,17 +8,27 @@ pub enum Mode {
     OperatorPending(Operator),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PendingAction {
+    FindForward,
+    FindBackward,
+    TillForward,
+    TillBackward,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CommandContext {
     pub count: Option<usize>,
     pub operator_count: Option<usize>,
     pub register: Option<char>,
+    pub pending_action: Option<PendingAction>,
 }
 impl CommandContext {
     pub fn reset(&mut self) {
         self.count = None;
         self.operator_count = None;
         self.register = None;
+        self.pending_action = None;
     }
 }
 

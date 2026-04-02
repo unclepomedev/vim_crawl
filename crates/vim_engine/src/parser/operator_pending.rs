@@ -1,10 +1,11 @@
 use crate::ast::action::Action;
 use crate::ast::command::ParsedCommand;
+use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
 use crate::ast::target::Target;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator, try_parse_count};
+use crate::parser::mapping::{parse_motion, parse_operator, parse_pending_action, try_parse_count};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
@@ -19,6 +20,7 @@ fn combined_context(ctx: &crate::state::CommandContext) -> crate::state::Command
         count: combined,
         operator_count: None,
         register: ctx.register,
+        pending_action: None,
     }
 }
 
@@ -27,40 +29,57 @@ pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
         return ParseResult::Incomplete;
     }
 
-    if let Some(second_op) = parse_operator(c) {
-        parser.state.mode = Mode::Normal;
+    if let Some(pending) = parse_pending_action(c) {
+        parser.state.context.pending_action = Some(pending);
+        return ParseResult::Incomplete;
+    }
 
-        return if op == second_op {
-            let action = Action::Operate(op, Target::Line);
-            let command = ParsedCommand {
-                context: combined_context(&parser.state.context),
-                action,
-            };
-            ParseResult::Success(command)
-        } else {
-            ParseResult::Invalid(ParseError::UnknownCommand)
-        };
+    if let Some(second_op) = parse_operator(c) {
+        return handle_operator(parser, op, second_op);
     }
 
     if let Some(motion) = parse_motion(c) {
-        parser.state.mode = Mode::Normal;
-        let action = Action::Operate(op, Target::Motion(motion));
-        let command = ParsedCommand {
-            context: combined_context(&parser.state.context),
-            action,
-        };
-        return ParseResult::Success(command);
+        return handle_motion(parser, op, motion);
     }
 
     parser.state.mode = Mode::Normal;
     ParseResult::Invalid(ParseError::InvalidMotion)
 }
 
+pub fn handle_operator(
+    parser: &mut VimParser,
+    first_op: Operator,
+    second_op: Operator,
+) -> ParseResult {
+    parser.state.mode = Mode::Normal;
+
+    if first_op == second_op {
+        let action = Action::Operate(first_op, Target::Line);
+        let command = ParsedCommand {
+            context: combined_context(&parser.state.context),
+            action,
+        };
+        ParseResult::Success(command)
+    } else {
+        ParseResult::Invalid(ParseError::UnknownCommand)
+    }
+}
+
+pub fn handle_motion(parser: &mut VimParser, op: Operator, motion: Motion) -> ParseResult {
+    parser.state.mode = Mode::Normal;
+    let action = Action::Operate(op, Target::Motion(motion));
+    let command = ParsedCommand {
+        context: combined_context(&parser.state.context),
+        action,
+    };
+    ParseResult::Success(command)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ast::motion::Motion;
-    use crate::state::CommandContext;
+    use crate::state::{CommandContext, PendingAction};
 
     #[test]
     fn test_operator_pending_line_wise_dd() {
@@ -167,11 +186,28 @@ mod tests {
                 context: CommandContext {
                     count: Some(3),
                     operator_count: None,
-                    register: None
+                    register: None,
+                    pending_action: None,
                 },
                 action: Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward)),
             })
         );
         assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_operator_pending_action() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Change);
+
+        let result = handle(&mut parser, Operator::Change, 't');
+
+        assert_eq!(result, ParseResult::Incomplete);
+        assert_eq!(
+            parser.state.context.pending_action,
+            Some(PendingAction::TillForward)
+        );
+        // Mode should not revert to Normal yet, still OperatorPending
+        assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Change));
     }
 }

@@ -8,5 +8,8 @@ pub enum Motion {
     WordBackward,
     StartOfLine,
     EndOfLine,
-    Find(char),
+    FindForward(char),
+    FindBackward(char),
+    TillForward(char),
+    TillBackward(char),
 }

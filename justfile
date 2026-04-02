@@ -19,7 +19,7 @@ dump_ex:
     echo "==> Done! Both markdown files have been generated."
 
 fix-rs:
-    cargo clippy --fix --allow-dirty --allow-staged --all-targets -- -D warnings
+    cargo clippy --fix --allow-dirty --allow-staged --all-targets --workspace -- -D warnings
 
 fmt-rs:
     just fix-rs
