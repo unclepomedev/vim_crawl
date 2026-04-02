@@ -7,6 +7,7 @@ pub enum Action {
     Move(Motion),
     Operate(Operator, Target),
     Insert(String),
+    Backspace,
     MacroRecord(char),
     MacroExecute(char),
     Undo,
