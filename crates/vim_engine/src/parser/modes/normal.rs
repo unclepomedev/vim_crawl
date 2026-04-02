@@ -3,27 +3,38 @@ use crate::ast::command::ParsedCommand;
 use crate::ast::motion::Motion;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator, parse_pending_action, try_parse_count};
+use crate::parser::key::Key;
+use crate::parser::mapping::{
+    parse_motion, parse_operator, parse_pending_action, parse_standalone_action, try_parse_count,
+};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
-pub fn handle(parser: &mut VimParser, c: char) -> ParseResult {
-    if try_parse_count(c, &mut parser.state.context) {
+pub fn handle(parser: &mut VimParser, key: Key) -> ParseResult {
+    if try_parse_count(key, &mut parser.state.context) {
         return ParseResult::Incomplete;
     }
 
-    if let Some(op) = parse_operator(c) {
+    if let Some(op) = parse_operator(key) {
         parser.state.context.operator_count = parser.state.context.count.take();
         parser.state.mode = Mode::OperatorPending(op);
         return ParseResult::Incomplete;
     }
 
-    if let Some(pending) = parse_pending_action(c) {
+    if let Some(pending) = parse_pending_action(key) {
         parser.state.context.pending_action = Some(pending);
         return ParseResult::Incomplete;
     }
 
-    if let Some(motion) = parse_motion(c) {
+    if let Some(action) = parse_standalone_action(key) {
+        let command = ParsedCommand {
+            context: parser.state.context.clone(),
+            action,
+        };
+        return ParseResult::Success(command);
+    }
+
+    if let Some(motion) = parse_motion(key) {
         return handle_motion(parser, motion);
     }
 
@@ -46,6 +57,7 @@ mod tests {
     use crate::ast::motion::Motion;
     use crate::ast::operator::Operator;
     use crate::ast::target::Target;
+    use crate::parser::key::Key;
     use crate::state::{CommandContext, PendingAction};
 
     #[test]
@@ -53,13 +65,13 @@ mod tests {
         let mut parser = VimParser::new();
 
         let test_cases = vec![
-            ('h', Motion::Left),
-            ('j', Motion::Down),
-            ('k', Motion::Up),
-            ('l', Motion::Right),
-            ('w', Motion::WordForward),
-            ('b', Motion::WordBackward),
-            ('$', Motion::EndOfLine),
+            (Key::Char('h'), Motion::Left),
+            (Key::Char('j'), Motion::Down),
+            (Key::Char('k'), Motion::Up),
+            (Key::Char('l'), Motion::Right),
+            (Key::Char('w'), Motion::WordForward),
+            (Key::Char('b'), Motion::WordBackward),
+            (Key::Char('$'), Motion::EndOfLine),
         ];
 
         for (input, expected_motion) in test_cases {
@@ -78,7 +90,7 @@ mod tests {
     fn test_normal_mode_operator_transition() {
         let mut parser = VimParser::new();
 
-        let result = handle(&mut parser, 'd');
+        let result = handle(&mut parser, Key::Char('d'));
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
@@ -87,8 +99,8 @@ mod tests {
     #[test]
     fn test_count_motion() {
         let mut parser = VimParser::new();
-        assert_eq!(parser.feed('3'), ParseResult::Incomplete);
-        let result = parser.feed('w');
+        assert_eq!(parser.feed(Key::Char('3')), ParseResult::Incomplete);
+        let result = parser.feed(Key::Char('w'));
 
         if let ParseResult::Success(cmd) = result {
             assert_eq!(cmd.context.count, Some(3));
@@ -102,9 +114,9 @@ mod tests {
     #[test]
     fn test_count_line_wise() {
         let mut parser = VimParser::new();
-        parser.feed('2');
-        parser.feed('d');
-        let result = parser.feed('d');
+        parser.feed(Key::Char('2'));
+        parser.feed(Key::Char('d'));
+        let result = parser.feed(Key::Char('d'));
 
         if let ParseResult::Success(cmd) = result {
             assert_eq!(cmd.context.count, Some(2));
@@ -117,7 +129,7 @@ mod tests {
     #[test]
     fn test_zero_as_motion() {
         let mut parser = VimParser::new();
-        let result = parser.feed('0');
+        let result = parser.feed(Key::Char('0'));
 
         assert_eq!(
             result,
@@ -132,8 +144,8 @@ mod tests {
     #[test]
     fn test_zero_inside_count() {
         let mut parser = VimParser::new();
-        parser.feed('1');
-        let result = parser.feed('0');
+        parser.feed(Key::Char('1'));
+        let result = parser.feed(Key::Char('0'));
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(parser.state.context.count, Some(10));
@@ -142,11 +154,11 @@ mod tests {
     #[test]
     fn test_operator_count_times_motion_count() {
         let mut parser = VimParser::new();
-        parser.feed('3');
-        parser.feed('d');
-        let result = parser.feed('2');
+        parser.feed(Key::Char('3'));
+        parser.feed(Key::Char('d'));
+        let result = parser.feed(Key::Char('2'));
         assert_eq!(result, ParseResult::Incomplete);
-        let result = parser.feed('w');
+        let result = parser.feed(Key::Char('w'));
 
         if let ParseResult::Success(cmd) = result {
             assert_eq!(cmd.context.count, Some(6));
@@ -164,10 +176,10 @@ mod tests {
     #[test]
     fn test_multi_digit_count() {
         let mut parser = VimParser::new();
-        parser.feed('1');
-        parser.feed('2');
-        parser.feed('3');
-        let result = parser.feed('w');
+        parser.feed(Key::Char('1'));
+        parser.feed(Key::Char('2'));
+        parser.feed(Key::Char('3'));
+        let result = parser.feed(Key::Char('w'));
 
         if let ParseResult::Success(cmd) = result {
             assert_eq!(cmd.context.count, Some(123));
@@ -180,7 +192,7 @@ mod tests {
     #[test]
     fn test_normal_mode_pending_action() {
         let mut parser = VimParser::new();
-        let result = handle(&mut parser, 'f');
+        let result = handle(&mut parser, Key::Char('f'));
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(
@@ -188,5 +200,62 @@ mod tests {
             Some(PendingAction::FindForward)
         );
         assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_normal_mode_standalone_actions() {
+        let mut parser = VimParser::new();
+
+        let result_undo = handle(&mut parser, Key::Char('u'));
+        assert_eq!(
+            result_undo,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Undo,
+            })
+        );
+
+        let result_redo = handle(&mut parser, Key::Ctrl('r'));
+        assert_eq!(
+            result_redo,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Redo,
+            })
+        );
+    }
+
+    #[test]
+    fn test_count_standalone_action() {
+        let mut parser = VimParser::new();
+
+        assert_eq!(parser.feed(Key::Char('5')), ParseResult::Incomplete);
+
+        let result = parser.feed(Key::Char('u'));
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(5));
+            assert_eq!(cmd.action, Action::Undo);
+        } else {
+            panic!("Expected Success");
+        }
+
+        assert_eq!(parser.state.context.count, None);
+    }
+
+    #[test]
+    fn test_count_standalone_redo_action() {
+        let mut parser = VimParser::new();
+
+        assert_eq!(parser.feed(Key::Char('4')), ParseResult::Incomplete);
+
+        let result = parser.feed(Key::Ctrl('r'));
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(4));
+            assert_eq!(cmd.action, Action::Redo);
+        } else {
+            panic!("Expected Success");
+        }
+
+        assert_eq!(parser.state.context.count, None);
     }
 }

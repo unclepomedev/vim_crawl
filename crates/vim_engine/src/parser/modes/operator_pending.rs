@@ -6,6 +6,7 @@ use crate::ast::target::Target;
 use crate::ast::text_object::TextObject;
 use crate::error::ParseError;
 use crate::parser::VimParser;
+use crate::parser::key::Key;
 use crate::parser::mapping::{
     parse_motion, parse_operator, parse_pending_action, parse_text_object_modifier, try_parse_count,
 };
@@ -27,26 +28,26 @@ fn combined_context(ctx: &crate::state::CommandContext) -> crate::state::Command
     }
 }
 
-pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
-    if try_parse_count(c, &mut parser.state.context) {
+pub fn handle(parser: &mut VimParser, op: Operator, key: Key) -> ParseResult {
+    if try_parse_count(key, &mut parser.state.context) {
         return ParseResult::Incomplete;
     }
 
-    if let Some(pending) = parse_pending_action(c) {
+    if let Some(pending) = parse_pending_action(key) {
         parser.state.context.pending_action = Some(pending);
         return ParseResult::Incomplete;
     }
 
-    if let Some(modifier) = parse_text_object_modifier(c) {
+    if let Some(modifier) = parse_text_object_modifier(key) {
         parser.state.context.pending_action = Some(modifier);
         return ParseResult::Incomplete;
     }
 
-    if let Some(second_op) = parse_operator(c) {
+    if let Some(second_op) = parse_operator(key) {
         return handle_operator(parser, op, second_op);
     }
 
-    if let Some(motion) = parse_motion(c) {
+    if let Some(motion) = parse_motion(key) {
         return handle_motion(parser, op, motion);
     }
 
@@ -114,6 +115,7 @@ pub fn handle_text_object(
 mod tests {
     use super::*;
     use crate::ast::motion::Motion;
+    use crate::parser::key::Key;
     use crate::state::{CommandContext, PendingAction};
 
     #[test]
@@ -121,7 +123,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result = handle(&mut parser, Operator::Delete, 'd');
+        let result = handle(&mut parser, Operator::Delete, Key::Char('d'));
 
         assert_eq!(
             result,
@@ -138,7 +140,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Yank);
 
-        let result = handle(&mut parser, Operator::Yank, 'y');
+        let result = handle(&mut parser, Operator::Yank, Key::Char('y'));
 
         assert_eq!(
             result,
@@ -155,7 +157,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Change);
 
-        let result = handle(&mut parser, Operator::Change, 'c');
+        let result = handle(&mut parser, Operator::Change, Key::Char('c'));
 
         assert_eq!(
             result,
@@ -172,7 +174,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result = handle(&mut parser, Operator::Delete, 'y');
+        let result = handle(&mut parser, Operator::Delete, Key::Char('y'));
 
         assert_eq!(result, ParseResult::Invalid(ParseError::UnknownCommand));
         assert_eq!(parser.state.mode, Mode::Normal);
@@ -183,7 +185,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result = handle(&mut parser, Operator::Delete, 'w');
+        let result = handle(&mut parser, Operator::Delete, Key::Char('w'));
 
         assert_eq!(
             result,
@@ -200,7 +202,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Change);
 
-        let result = handle(&mut parser, Operator::Change, 'w');
+        let result = handle(&mut parser, Operator::Change, Key::Char('w'));
 
         assert_eq!(
             result,
@@ -217,7 +219,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result = handle(&mut parser, Operator::Delete, 'z');
+        let result = handle(&mut parser, Operator::Delete, Key::Char('z'));
 
         assert_eq!(result, ParseResult::Invalid(ParseError::InvalidMotion));
         assert_eq!(parser.state.mode, Mode::Normal);
@@ -228,10 +230,10 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result1 = handle(&mut parser, Operator::Delete, '3');
+        let result1 = handle(&mut parser, Operator::Delete, Key::Char('3'));
         assert_eq!(result1, ParseResult::Incomplete);
 
-        let result2 = handle(&mut parser, Operator::Delete, 'w');
+        let result2 = handle(&mut parser, Operator::Delete, Key::Char('w'));
         assert_eq!(
             result2,
             ParseResult::Success(ParsedCommand {
@@ -252,7 +254,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Change);
 
-        let result = handle(&mut parser, Operator::Change, 't');
+        let result = handle(&mut parser, Operator::Change, Key::Char('t'));
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(
@@ -267,10 +269,10 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Change);
 
-        let result1 = handle(&mut parser, Operator::Change, '3');
+        let result1 = handle(&mut parser, Operator::Change, Key::Char('3'));
         assert_eq!(result1, ParseResult::Incomplete);
 
-        let result2 = handle(&mut parser, Operator::Change, 'w');
+        let result2 = handle(&mut parser, Operator::Change, Key::Char('w'));
         assert_eq!(
             result2,
             ParseResult::Success(ParsedCommand {
@@ -291,7 +293,7 @@ mod tests {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
-        let result = handle(&mut parser, Operator::Delete, 'i');
+        let result = handle(&mut parser, Operator::Delete, Key::Char('i'));
 
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(
