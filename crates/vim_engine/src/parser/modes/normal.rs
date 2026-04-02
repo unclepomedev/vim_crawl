@@ -3,7 +3,9 @@ use crate::ast::command::ParsedCommand;
 use crate::ast::motion::Motion;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator, parse_pending_action, try_parse_count};
+use crate::parser::mapping::{
+    parse_motion, parse_operator, parse_pending_action, parse_standalone_action, try_parse_count,
+};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
@@ -21,6 +23,14 @@ pub fn handle(parser: &mut VimParser, c: char) -> ParseResult {
     if let Some(pending) = parse_pending_action(c) {
         parser.state.context.pending_action = Some(pending);
         return ParseResult::Incomplete;
+    }
+
+    if let Some(action) = parse_standalone_action(c) {
+        let command = ParsedCommand {
+            context: parser.state.context.clone(),
+            action,
+        };
+        return ParseResult::Success(command);
     }
 
     if let Some(motion) = parse_motion(c) {
@@ -188,5 +198,45 @@ mod tests {
             Some(PendingAction::FindForward)
         );
         assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_normal_mode_standalone_actions() {
+        let mut parser = VimParser::new();
+
+        let result_undo = handle(&mut parser, 'u');
+        assert_eq!(
+            result_undo,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Undo,
+            })
+        );
+
+        let result_redo = handle(&mut parser, '\x12');
+        assert_eq!(
+            result_redo,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Redo,
+            })
+        );
+    }
+
+    #[test]
+    fn test_count_standalone_action() {
+        let mut parser = VimParser::new();
+
+        assert_eq!(parser.feed('5'), ParseResult::Incomplete);
+
+        let result = parser.feed('u');
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(5));
+            assert_eq!(cmd.action, Action::Undo);
+        } else {
+            panic!("Expected Success");
+        }
+
+        assert_eq!(parser.state.context.count, None);
     }
 }

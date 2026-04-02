@@ -29,11 +29,22 @@ pub mod validation;
 ///
 /// `VimParser` acts as a finite state machine, interpreting keystrokes based on standard
 /// Vim grammar. It handles basic motions, operators, counts (multipliers), text objects,
-/// and pending actions (such as waiting for a character after `f` or `i`).
+/// and pending actions.
 ///
-/// The parser is designed to be completely decoupled from the game engine or UI. It strictly
-/// focuses on semantic evaluation—taking raw characters via the [`feed`](Self::feed) method
-/// and outputting a structured Abstract Syntax Tree (AST) wrapped in a [`ParseResult`].
+/// # Input Encoding Contract
+///
+/// The `feed` method expects raw keystrokes to be passed as `char`. To decouple the parser
+/// from specific windowing or UI frameworks (like Bevy or Winit), clients must map physical
+/// key events to the following standard ASCII control characters before passing them to `feed`:
+///
+/// * **Printable Characters**: Passed as-is (e.g., `'a'`, `'D'`, `'3'`, `'$'`).
+/// * **Control Characters (`<C-X>`)**: Mapped to ASCII values `\x01` through `\x1A`.
+///   * Example: `<C-r>` (Redo) -> `\x12`
+///   * Example: `<C-d>` (Page Down) -> `\x04`
+///   * Example: `<C-v>` (Visual Block) -> `\x16`
+/// * **Special Keys**:
+///   * `<Esc>` -> `\x1b`
+///   * `<CR>` (Enter) -> `\r` or `\n`
 ///
 /// # Examples
 ///
@@ -46,13 +57,10 @@ pub mod validation;
 /// // Input: '3' (Count)
 /// assert_eq!(parser.feed('3'), ParseResult::Incomplete);
 ///
-/// // Input: 'd' (Operator)
-/// assert_eq!(parser.feed('d'), ParseResult::Incomplete);
-///
-/// // Input: 'w' (Motion) -> Resolves to "Delete 3 Words"
-/// if let ParseResult::Success(cmd) = parser.feed('w') {
-///     // `cmd` contains the AST for 3 * Delete(WordForward).
-///     // The parser automatically resets its context and returns to Normal mode.
+/// // Input: 'u' (Undo) -> Resolves to Action::Undo with count 3
+/// if let ParseResult::Success(cmd) = parser.feed('u') {
+///     // `cmd.action` is `Action::Undo`
+///     // `cmd.context.count` is `Some(3)`
 /// }
 /// ```
 #[derive(Default)]

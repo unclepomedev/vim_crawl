@@ -1,5 +1,6 @@
 //! Map a character to an AST node.
 
+use crate::ast::action::Action;
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
 use crate::ast::text_object::TextObject;
@@ -82,5 +83,13 @@ pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
         true
     } else {
         false
+    }
+}
+
+pub fn parse_standalone_action(c: char) -> Option<Action> {
+    match c {
+        'u' => Some(Action::Undo),
+        '\x12' => Some(Action::Redo),
+        _ => None,
     }
 }

@@ -9,4 +9,6 @@ pub enum Action {
     Insert(String),
     MacroRecord(char),
     MacroExecute(char),
+    Undo,
+    Redo,
 }
