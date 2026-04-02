@@ -35,7 +35,10 @@ pub fn try_parse_count(c: char, context: &mut CommandContext) -> bool {
     if c.is_ascii_digit() {
         let digit = c.to_digit(10).unwrap() as usize;
         let current = context.count.unwrap_or(0);
-        context.count = Some(current * 10 + digit);
+        context.count = current
+            .checked_mul(10)
+            .and_then(|v| v.checked_add(digit))
+            .or(context.count); // Preserve previous count on overflow
         true
     } else {
         false

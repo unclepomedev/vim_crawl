@@ -123,4 +123,20 @@ mod tests {
         assert_eq!(result, ParseResult::Incomplete);
         assert_eq!(parser.state.context.count, Some(10));
     }
+
+    #[test]
+    fn test_multi_digit_count() {
+        let mut parser = VimParser::new();
+        parser.feed('1');
+        parser.feed('2');
+        parser.feed('3');
+        let result = parser.feed('w');
+
+        if let ParseResult::Success(cmd) = result {
+            assert_eq!(cmd.context.count, Some(123));
+            assert_eq!(cmd.action, Action::Move(Motion::WordForward));
+        } else {
+            panic!("Expected Success");
+        }
+    }
 }
