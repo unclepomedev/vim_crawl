@@ -234,4 +234,28 @@ mod tests {
         );
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Change));
     }
+
+    #[test]
+    fn test_operator_pending_with_count_cw_enters_insert() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Change);
+
+        let result1 = handle(&mut parser, Operator::Change, '3');
+        assert_eq!(result1, ParseResult::Incomplete);
+
+        let result2 = handle(&mut parser, Operator::Change, 'w');
+        assert_eq!(
+            result2,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext {
+                    count: Some(3),
+                    operator_count: None,
+                    register: None,
+                    pending_action: None,
+                },
+                action: Action::Operate(Operator::Change, Target::Motion(Motion::WordForward)),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Insert);
+    }
 }
