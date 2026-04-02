@@ -14,6 +14,8 @@ pub enum PendingAction {
     FindBackward,
     TillForward,
     TillBackward,
+    Inner,
+    Around,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

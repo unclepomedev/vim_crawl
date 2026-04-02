@@ -2,6 +2,7 @@
 
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
+use crate::ast::text_object::TextObject;
 use crate::state::{CommandContext, PendingAction};
 
 pub fn parse_motion(c: char) -> Option<Motion> {
@@ -33,6 +34,32 @@ pub fn parse_pending_action(c: char) -> Option<PendingAction> {
         'F' => Some(PendingAction::FindBackward),
         't' => Some(PendingAction::TillForward),
         'T' => Some(PendingAction::TillBackward),
+        _ => None,
+    }
+}
+
+pub fn parse_text_object_modifier(c: char) -> Option<PendingAction> {
+    match c {
+        'i' => Some(PendingAction::Inner),
+        'a' => Some(PendingAction::Around),
+        _ => None,
+    }
+}
+
+pub fn parse_pending_motion(pending: PendingAction, c: char) -> Option<Motion> {
+    match pending {
+        PendingAction::FindForward => Some(Motion::FindForward(c)),
+        PendingAction::FindBackward => Some(Motion::FindBackward(c)),
+        PendingAction::TillForward => Some(Motion::TillForward(c)),
+        PendingAction::TillBackward => Some(Motion::TillBackward(c)),
+        _ => None,
+    }
+}
+
+pub fn parse_text_object(pending: PendingAction, c: char) -> Option<TextObject> {
+    match (pending, c) {
+        (PendingAction::Inner, 'w') => Some(TextObject::InnerWord),
+        (PendingAction::Around, 'w') => Some(TextObject::AWord),
         _ => None,
     }
 }

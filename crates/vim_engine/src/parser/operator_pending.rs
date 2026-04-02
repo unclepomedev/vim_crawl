@@ -3,9 +3,12 @@ use crate::ast::command::ParsedCommand;
 use crate::ast::motion::Motion;
 use crate::ast::operator::Operator;
 use crate::ast::target::Target;
+use crate::ast::text_object::TextObject;
 use crate::error::ParseError;
 use crate::parser::VimParser;
-use crate::parser::mapping::{parse_motion, parse_operator, parse_pending_action, try_parse_count};
+use crate::parser::mapping::{
+    parse_motion, parse_operator, parse_pending_action, parse_text_object_modifier, try_parse_count,
+};
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
 
@@ -31,6 +34,11 @@ pub fn handle(parser: &mut VimParser, op: Operator, c: char) -> ParseResult {
 
     if let Some(pending) = parse_pending_action(c) {
         parser.state.context.pending_action = Some(pending);
+        return ParseResult::Incomplete;
+    }
+
+    if let Some(modifier) = parse_text_object_modifier(c) {
+        parser.state.context.pending_action = Some(modifier);
         return ParseResult::Incomplete;
     }
 
@@ -76,6 +84,24 @@ pub fn handle_motion(parser: &mut VimParser, op: Operator, motion: Motion) -> Pa
     };
 
     let action = Action::Operate(op, Target::Motion(motion));
+    let command = ParsedCommand {
+        context: combined_context(&parser.state.context),
+        action,
+    };
+    ParseResult::Success(command)
+}
+
+pub fn handle_text_object(
+    parser: &mut VimParser,
+    op: Operator,
+    text_obj: TextObject,
+) -> ParseResult {
+    parser.state.mode = match op {
+        Operator::Change => Mode::Insert,
+        _ => Mode::Normal,
+    };
+
+    let action = Action::Operate(op, Target::TextObject(text_obj));
     let command = ParsedCommand {
         context: combined_context(&parser.state.context),
         action,
@@ -257,5 +283,20 @@ mod tests {
             })
         );
         assert_eq!(parser.state.mode, Mode::Insert);
+    }
+
+    #[test]
+    fn test_operator_pending_text_object_modifier() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Delete);
+
+        let result = handle(&mut parser, Operator::Delete, 'i');
+
+        assert_eq!(result, ParseResult::Incomplete);
+        assert_eq!(
+            parser.state.context.pending_action,
+            Some(PendingAction::Inner)
+        );
+        assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
     }
 }
