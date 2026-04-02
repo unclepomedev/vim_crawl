@@ -34,6 +34,7 @@ pub fn parse_pending_action(c: char) -> Option<PendingAction> {
         'F' => Some(PendingAction::FindBackward),
         't' => Some(PendingAction::TillForward),
         'T' => Some(PendingAction::TillBackward),
+        '"' => Some(PendingAction::Register),
         _ => None,
     }
 }

@@ -16,6 +16,7 @@ pub enum PendingAction {
     TillBackward,
     Inner,
     Around,
+    Register,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
