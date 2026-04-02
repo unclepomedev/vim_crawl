@@ -11,7 +11,15 @@ pub enum Mode {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CommandContext {
     pub count: Option<usize>,
+    pub operator_count: Option<usize>,
     pub register: Option<char>,
+}
+impl CommandContext {
+    pub fn reset(&mut self) {
+        self.count = None;
+        self.operator_count = None;
+        self.register = None;
+    }
 }
 
 #[derive(Debug, Clone)]
