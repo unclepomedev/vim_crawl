@@ -2,7 +2,9 @@ use crate::parser::result::ParseResult;
 use crate::state::{EditorState, Mode};
 
 pub mod insert;
+pub mod mapping;
 pub mod normal;
+pub mod operator_pending;
 pub mod result;
 pub mod visual;
 
@@ -21,6 +23,7 @@ impl VimParser {
             Mode::Normal => normal::handle(self, c),
             Mode::Insert => insert::handle(self, c),
             Mode::Visual => visual::handle(self, c),
+            Mode::OperatorPending(op) => operator_pending::handle(self, op, c),
         }
     }
 }
