@@ -84,6 +84,16 @@ impl VimParser {
     }
 
     fn resolve_pending(&mut self, pending: PendingAction, c: char) -> ParseResult {
+        if pending == PendingAction::Register {
+            return if mapping::is_valid_register(c) {
+                self.state.context.register = Some(c);
+                ParseResult::Incomplete
+            } else {
+                self.state.mode = Mode::Normal;
+                ParseResult::Invalid(ParseError::UnknownCommand)
+            };
+        }
+
         if let Some(motion) = mapping::parse_pending_motion(pending, c) {
             return match self.state.mode {
                 Mode::Normal => normal::handle_motion(self, motion),
@@ -228,5 +238,55 @@ mod tests {
         } else {
             panic!("Expected Success result for '3dw' sequence");
         }
+    }
+
+    #[test]
+    fn test_parser_feed_register_and_operator() {
+        let mut parser = VimParser::new();
+
+        let res1 = parser.feed('"');
+        assert_eq!(res1, ParseResult::Incomplete);
+        assert_eq!(
+            parser.state.context.pending_action,
+            Some(PendingAction::Register)
+        );
+
+        let res2 = parser.feed('+');
+        assert_eq!(res2, ParseResult::Incomplete);
+        assert_eq!(parser.state.context.pending_action, None);
+        assert_eq!(parser.state.context.register, Some('+'));
+
+        let res3 = parser.feed('d');
+        assert_eq!(res3, ParseResult::Incomplete);
+        assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Delete));
+
+        let res4 = parser.feed('w');
+        assert_eq!(
+            res4,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext {
+                    count: None,
+                    operator_count: None,
+                    register: Some('+'),
+                    pending_action: None,
+                },
+                action: Action::Operate(Operator::Delete, Target::Motion(Motion::WordForward)),
+            })
+        );
+
+        assert_eq!(parser.state.context.register, None);
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_parser_feed_invalid_register() {
+        let mut parser = VimParser::new();
+        parser.feed('"');
+        let res = parser.feed(' ');
+
+        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(parser.state.context.pending_action, None);
+        assert_eq!(parser.state.context.register, None);
+        assert_eq!(parser.state.mode, Mode::Normal);
     }
 }
