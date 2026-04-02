@@ -46,6 +46,8 @@ mod tests {
             ('k', Motion::Up),
             ('l', Motion::Right),
             ('w', Motion::WordForward),
+            ('b', Motion::WordBackward),
+            ('$', Motion::EndOfLine),
         ];
 
         for (input, expected_motion) in test_cases {

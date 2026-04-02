@@ -11,6 +11,8 @@ pub fn parse_motion(c: char) -> Option<Motion> {
         'k' => Some(Motion::Up),
         'l' => Some(Motion::Right),
         'w' => Some(Motion::WordForward),
+        'b' => Some(Motion::WordBackward),
+        '$' => Some(Motion::EndOfLine),
         '0' => Some(Motion::StartOfLine),
         _ => None,
     }
