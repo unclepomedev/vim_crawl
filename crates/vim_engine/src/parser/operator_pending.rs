@@ -51,9 +51,12 @@ pub fn handle_operator(
     first_op: Operator,
     second_op: Operator,
 ) -> ParseResult {
-    parser.state.mode = Mode::Normal;
-
     if first_op == second_op {
+        parser.state.mode = match first_op {
+            Operator::Change => Mode::Insert,
+            _ => Mode::Normal,
+        };
+
         let action = Action::Operate(first_op, Target::Line);
         let command = ParsedCommand {
             context: combined_context(&parser.state.context),
@@ -61,12 +64,17 @@ pub fn handle_operator(
         };
         ParseResult::Success(command)
     } else {
+        parser.state.mode = Mode::Normal;
         ParseResult::Invalid(ParseError::UnknownCommand)
     }
 }
 
 pub fn handle_motion(parser: &mut VimParser, op: Operator, motion: Motion) -> ParseResult {
-    parser.state.mode = Mode::Normal;
+    parser.state.mode = match op {
+        Operator::Change => Mode::Insert,
+        _ => Mode::Normal,
+    };
+
     let action = Action::Operate(op, Target::Motion(motion));
     let command = ParsedCommand {
         context: combined_context(&parser.state.context),
@@ -129,7 +137,7 @@ mod tests {
                 action: Action::Operate(Operator::Change, Target::Line),
             })
         );
-        assert_eq!(parser.state.mode, Mode::Normal);
+        assert_eq!(parser.state.mode, Mode::Insert);
     }
 
     #[test]
@@ -144,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn test_operator_pending_valid_motion() {
+    fn test_operator_pending_valid_motion_dw() {
         let mut parser = VimParser::new();
         parser.state.mode = Mode::OperatorPending(Operator::Delete);
 
@@ -158,6 +166,23 @@ mod tests {
             })
         );
         assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_operator_pending_valid_motion_cw() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Change);
+
+        let result = handle(&mut parser, Operator::Change, 'w');
+
+        assert_eq!(
+            result,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Operate(Operator::Change, Target::Motion(Motion::WordForward)),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Insert);
     }
 
     #[test]
@@ -207,7 +232,30 @@ mod tests {
             parser.state.context.pending_action,
             Some(PendingAction::TillForward)
         );
-        // Mode should not revert to Normal yet, still OperatorPending
         assert_eq!(parser.state.mode, Mode::OperatorPending(Operator::Change));
+    }
+
+    #[test]
+    fn test_operator_pending_with_count_cw_enters_insert() {
+        let mut parser = VimParser::new();
+        parser.state.mode = Mode::OperatorPending(Operator::Change);
+
+        let result1 = handle(&mut parser, Operator::Change, '3');
+        assert_eq!(result1, ParseResult::Incomplete);
+
+        let result2 = handle(&mut parser, Operator::Change, 'w');
+        assert_eq!(
+            result2,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext {
+                    count: Some(3),
+                    operator_count: None,
+                    register: None,
+                    pending_action: None,
+                },
+                action: Action::Operate(Operator::Change, Target::Motion(Motion::WordForward)),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Insert);
     }
 }
