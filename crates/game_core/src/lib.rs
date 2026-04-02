@@ -1,4 +1,4 @@
-use crate::message::RawCharMessage;
+use crate::message::VimInputMessage;
 use bevy::prelude::*;
 
 mod message;
@@ -10,7 +10,7 @@ pub struct GameCorePlugin;
 impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<state::vim::VimState>()
-            .add_message::<RawCharMessage>()
+            .add_message::<VimInputMessage>()
             .add_systems(
                 Update,
                 (
