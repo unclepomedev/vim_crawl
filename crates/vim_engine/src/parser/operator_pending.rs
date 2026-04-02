@@ -10,7 +10,7 @@ use crate::state::Mode;
 
 fn combined_context(ctx: &crate::state::CommandContext) -> crate::state::CommandContext {
     let combined = match (ctx.operator_count, ctx.count) {
-        (Some(a), Some(b)) => Some(a * b),
+        (Some(a), Some(b)) => Some(a.saturating_mul(b)),
         (Some(a), None) => Some(a),
         (None, Some(b)) => Some(b),
         (None, None) => None,
