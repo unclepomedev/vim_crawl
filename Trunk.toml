@@ -1,0 +1,12 @@
+[build]
+target = "index.html"
+dist = "dist"
+
+[[hooks]]
+stage = "pre_build"
+command = "sh"
+command_arguments = ["-c", "mkdir -p dist/assets"]
+
+[[copy]]
+from = "assets"
+to = "assets"
