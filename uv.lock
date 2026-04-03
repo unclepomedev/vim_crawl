@@ -3,6 +3,24 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
+name = "types-houdini"
+version = "21.0.512.3"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/ff/5f09bda5c91969e91fb8d71226f667ac2b9756125e97811ad912a240861d/types_houdini-21.0.512.3-py2.py3-none-any.whl", hash = "sha256:faf2e1b7ba83f06275378078dfd9a33f930978a73e38c602c6a5cb77ecdf2e0d", size = 567931, upload-time = "2025-12-04T03:03:40.886Z" },
+]
+
+[[package]]
 name = "vim-crawl"
 version = "0.0.1"
 source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "types-houdini" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "types-houdini", specifier = ">=21.0.512.3" }]

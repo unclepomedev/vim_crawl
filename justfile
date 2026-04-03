@@ -4,6 +4,7 @@ bevy_repo := "https://github.com/bevyengine/bevy.git"
 bevy_egui_repo := "https://github.com/mvlabat/bevy_egui.git"
 clone_bevy := "bevy_tmp"
 clone_egui := "bevy_egui_tmp"
+PROJECT_ROOT := justfile_directory()
 
 # setup ===============================================================================================================
 dump_ex:
@@ -45,3 +46,17 @@ run-wasm:
 
 run-docker-compose-up-build:
     docker compose up --build
+
+# houdini ============================================================================================================
+HOUDINI_VEX_PATH := PROJECT_ROOT + "/vex/include"
+# Override via HOUDINI_RESOURCES env var for your platform/version
+HOUDINI_RESOURCES := env_var_or_default("HOUDINI_RESOURCES", "/Applications/Houdini/Houdini21.0.631/Frameworks/Houdini.framework/Versions/Current/Resources")
+# This env var should be set for untrusted localhost.
+HOUDINI_RAMEN_TOKEN := env_var_or_default("HOUDINI_RAMEN_TOKEN", "houdini_ramen_secret_2026")
+HOUDINI_RAMEN_PORT := env_var_or_default("HOUDINI_RAMEN_PORT", "18080")
+
+houdini-link:
+    HOUDINI_VEX_PATH="{{ HOUDINI_VEX_PATH }};&" HOUDINI_RAMEN_TOKEN={{ HOUDINI_RAMEN_TOKEN }} HOUDINI_RAMEN_PORT={{ HOUDINI_RAMEN_PORT }} {{ HOUDINI_RESOURCES }}/bin/houdini ramen_assets/link_server.py
+
+run-live:
+    HOUDINI_RAMEN_TOKEN={{ HOUDINI_RAMEN_TOKEN }} cargo run -p ramen_assets
