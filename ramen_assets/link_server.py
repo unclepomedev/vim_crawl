@@ -14,8 +14,8 @@ try:
     LIVE_LINK_PORT = int(os.getenv("HOUDINI_RAMEN_PORT", "18080"))
 except ValueError as err:
     raise RuntimeError("HOUDINI_RAMEN_PORT must be a valid integer") from err
-if not 0 <= LIVE_LINK_PORT <= 65535:
-    raise RuntimeError("HOUDINI_RAMEN_PORT must be between 0 and 65535")
+if not 1024 <= LIVE_LINK_PORT <= 65535:
+    raise RuntimeError("HOUDINI_RAMEN_PORT must be between 1024 and 65535")
 
 
 class HoudiniLiveLinkServer:
@@ -59,10 +59,51 @@ class HoudiniLiveLinkServer:
                     print(f"❌ Server error: {e}")
 
     def _handle_client(self, client):
+        auth_line = self._read_auth_line(client)
+        if auth_line is None:
+            return
+        if not self._verify_auth(client, auth_line):
+            return
+        script = self._read_script_body(client)
+        if script is None:
+            return
+        print("✅ Received valid script from Rust, executing...")
+        client.sendall(self._execute_in_houdini(script))
+
+    def _read_auth_line(self, client):
+        _MAX_AUTH_LINE = 512
+        buf = b""
+        try:
+            while b"\n" not in buf:
+                chunk = client.recv(1)
+                if not chunk:
+                    client.sendall(b"ERROR\nConnection closed before auth.")
+                    return None
+                buf += chunk
+                if len(buf) > _MAX_AUTH_LINE:
+                    self._reject_unauthorized(client)
+                    return None
+        except socket.timeout:
+            client.sendall(b"ERROR\nServer read timeout during auth.")
+            return None
+        return buf
+
+    @staticmethod
+    def _verify_auth(client, auth_line):
+        expected = f"AUTH:{HOUDINI_RAMEN_TOKEN}\n".encode("utf-8")
+        if auth_line != expected:
+            HoudiniLiveLinkServer._reject_unauthorized(client)
+            return False
+        return True
+
+    @staticmethod
+    def _reject_unauthorized(client):
+        print("❌ Unauthorized connection attempt rejected.")
+        client.sendall(b"ERROR\nUnauthorized payload. Access denied.")
+
+    def _read_script_body(self, client):
         chunks = []
         total = 0
-        is_oversize = False
-
         try:
             while True:
                 packet = client.recv(4096)
@@ -71,40 +112,30 @@ class HoudiniLiveLinkServer:
                 chunks.append(packet)
                 total += len(packet)
                 if total > MAX_SCRIPT_SIZE:
-                    is_oversize = True
-                    break
+                    print("❌ Received data exceeds maximum allowed size, dropping.")
+                    client.sendall(
+                        b"ERROR\nReceived data exceeds maximum allowed size."
+                    )
+                    return None
         except socket.timeout:
             client.sendall(b"ERROR\nServer read timeout.")
-            return
+            return None
+        return self._decode_script(client, chunks)
 
-        if is_oversize:
-            print("❌ Received data exceeds maximum allowed size, dropping.")
-            client.sendall(b"ERROR\nReceived data exceeds maximum allowed size.")
-            return
-
+    @staticmethod
+    def _decode_script(client, chunks):
         if not chunks:
             client.sendall(b"ERROR\nReceived empty script.")
-            return
-
+            return None
         try:
-            payload = b"".join(chunks).decode("utf-8")
+            script = b"".join(chunks).decode("utf-8")
         except UnicodeDecodeError:
             client.sendall(b"ERROR\nInvalid UTF-8 encoding in payload.")
-            return
-
-        auth_prefix = f"AUTH:{HOUDINI_RAMEN_TOKEN}\n"
-        if not payload.startswith(auth_prefix):
-            print("❌ Unauthorized connection attempt rejected.")
-            client.sendall(b"ERROR\nUnauthorized payload. Access denied.")
-            return
-        script = payload[len(auth_prefix) :]
+            return None
         if not script.strip():
             client.sendall(b"ERROR\nReceived empty script.")
-            return
-
-        print("✅ Received valid script from Rust, executing...")
-        response = self._execute_in_houdini(script)
-        client.sendall(response)
+            return None
+        return script
 
     @staticmethod
     def _execute_in_houdini(script):
