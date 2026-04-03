@@ -32,8 +32,8 @@ fn handle_command(vim_state: &mut VimState, cmd: ParsedCommand) {
         Action::Backspace => {
             vim_state.buffer.pop();
         }
-        _ => {
-            debug!("Action parsed: {:?}", std::mem::discriminant(&cmd.action));
+        action => {
+            debug!("Action parsed: {:?}", std::mem::discriminant(&action));
         }
     }
 }
