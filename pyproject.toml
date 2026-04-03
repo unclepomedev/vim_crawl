@@ -8,5 +8,6 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "ruff>=0.15.9",
     "types-houdini>=21.0.512.3",
 ]

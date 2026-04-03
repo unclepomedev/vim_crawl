@@ -98,6 +98,9 @@ class HoudiniLiveLinkServer:
             client.sendall(b"ERROR\nUnauthorized payload. Access denied.")
             return
         script = payload[len(auth_prefix) :]
+        if not script.strip():
+            client.sendall(b"ERROR\nReceived empty script.")
+            return
 
         print("✅ Received valid script from Rust, executing...")
         response = self._execute_in_houdini(script)

@@ -60,3 +60,7 @@ houdini-link:
 
 run-live:
     HOUDINI_RAMEN_TOKEN={{ HOUDINI_RAMEN_TOKEN }} cargo run -p ramen_assets
+
+# python ==========================================================
+fmt-py:
+    uv run ruff format tools ramen_assets
