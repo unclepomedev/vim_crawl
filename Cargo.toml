@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [workspace]
 resolver = "3"
-members = ["crates/game_assets", "crates/game_core", "crates/game_ui", "crates/vim_engine"]
+members = ["crates/game_assets", "crates/game_core", "crates/game_ui", "crates/vim_engine", "ramen_assets"]
 
 [workspace.dependencies]
 bevy = "0.18.1"
