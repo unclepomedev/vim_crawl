@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - debug
+      - debug  # TODO: remove
 
 permissions:
   contents: read
@@ -30,8 +30,14 @@ jobs:
           wget -qO- https://github.com/trunk-rs/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
           ./trunk --version
 
+      - name: Set short git short commit SHA
+        id: vars
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
       - name: Build with Trunk
         run: ./trunk build --release --public-url "/${{ github.event.repository.name }}/"
+        env:
+          COMMIT_HASH: ${{ steps.vars.outputs.short_sha }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

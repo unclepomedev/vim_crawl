@@ -23,7 +23,14 @@ pub fn render_editor_ui(
     frame.fill = egui::Color32::from_rgba_premultiplied(10, 10, 15, 200);
 
     egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
-        ui.heading(egui::RichText::new("Vim Engine E2E Test").color(egui::Color32::GREEN));
+        ui.horizontal(|ui| {
+            ui.heading(egui::RichText::new("Vim Engine E2E Test").color(egui::Color32::GREEN));
+
+            if let Some(hash) = option_env!("COMMIT_HASH") {
+                ui.label(egui::RichText::new(hash).small().color(egui::Color32::GRAY));
+            }
+        });
+
         ui.separator();
 
         let mode_str = format!("{:?}", vim_state.parser.state.mode);
