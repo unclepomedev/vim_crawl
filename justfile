@@ -64,3 +64,11 @@ run-live:
 # python ==========================================================
 fmt-py:
     uv run ruff format tools ramen_assets
+
+# misc ===========================================================================
+pch:
+    set -e
+    gitleaks protect --staged --redact --no-banner
+    status=0; rg '[\p{Han}\p{Hiragana}\p{Katakana}]' src crates assets ramen_assets .cargo .github tools >/dev/null || status=$?; [ "$status" -eq 1 ]
+    cargo fmt --all -- --check
+    cargo clippy --all-targets --all-features -- -D warnings
