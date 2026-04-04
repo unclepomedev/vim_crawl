@@ -2,13 +2,15 @@ use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
 use game_core::state::vim::VimState;
 
+// To avoid initialization lag between macOS and Metal, the first 10 frames will skip the rendering process.
+const WARMUP_FRAMES: u32 = 10;
+
 pub fn render_editor_ui(
     mut contexts: EguiContexts,
     vim_state: Res<VimState>,
     mut frame_counter: Local<u32>,
 ) {
-    // To avoid initialization lag between macOS and Metal, the first 10 frames will skip the rendering process.
-    if *frame_counter < 10 {
+    if *frame_counter < WARMUP_FRAMES {
         *frame_counter += 1;
         return;
     }

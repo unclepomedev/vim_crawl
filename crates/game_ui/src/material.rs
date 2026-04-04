@@ -1,4 +1,5 @@
 use crate::components::MainCamera;
+use bevy::window::PrimaryWindow;
 use bevy::{
     core_pipeline::{core_2d::graph::Node2d, fullscreen_material::FullscreenMaterial},
     prelude::*,
@@ -36,14 +37,14 @@ impl FullscreenMaterial for ElectronSeaMaterial {
 
 pub fn update_world_material(
     time: Res<Time>,
-    windows: Query<&Window>,
+    windows: Query<&Window, With<PrimaryWindow>>,
     camera_q: Query<&Transform, With<MainCamera>>,
     mut mat_q: Query<&mut ElectronSeaMaterial>,
 ) {
-    let resolution = match windows.single() {
-        Ok(w) => Vec2::new(w.width(), w.height()),
-        Err(_) => Vec2::new(1280.0, 720.0),
-    };
+    let resolution = windows
+        .single()
+        .map(|w| Vec2::new(w.width(), w.height()))
+        .unwrap_or(Vec2::new(1280.0, 720.0));
 
     let camera_pos = camera_q
         .single()
