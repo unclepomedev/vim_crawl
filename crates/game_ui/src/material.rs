@@ -1,0 +1,59 @@
+use crate::components::MainCamera;
+use bevy::window::PrimaryWindow;
+use bevy::{
+    core_pipeline::{core_2d::graph::Node2d, fullscreen_material::FullscreenMaterial},
+    prelude::*,
+    reflect::TypePath,
+    render::{
+        extract_component::ExtractComponent,
+        render_graph::{InternedRenderLabel, RenderLabel},
+        render_resource::ShaderType,
+    },
+    shader::ShaderRef,
+};
+
+#[derive(Component, ExtractComponent, Clone, Copy, Default, ShaderType, TypePath)]
+pub struct ElectronSeaMaterial {
+    pub time: f32,
+    pub resolution: Vec2,
+    pub camera_pos: Vec2,
+    pub padding: Vec2,
+}
+
+//noinspection ALL: suppress "Trait `WriteInto` is not implemented for `ElectronSeaMaterial`"
+impl FullscreenMaterial for ElectronSeaMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/electron_sea.wgsl".into()
+    }
+
+    fn node_edges() -> Vec<InternedRenderLabel> {
+        vec![
+            Node2d::Tonemapping.intern(),
+            Self::node_label().intern(),
+            Node2d::EndMainPassPostProcessing.intern(),
+        ]
+    }
+}
+
+pub fn update_world_material(
+    time: Res<Time>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    camera_q: Query<&Transform, With<MainCamera>>,
+    mut mat_q: Query<&mut ElectronSeaMaterial>,
+) {
+    let resolution = windows
+        .single()
+        .map(|w| Vec2::new(w.width(), w.height()))
+        .unwrap_or(Vec2::new(1280.0, 720.0));
+
+    let camera_pos = camera_q
+        .single()
+        .map(|t| Vec2::new(t.translation.x, t.translation.y))
+        .unwrap_or(Vec2::ZERO);
+
+    for mut mat in &mut mat_q {
+        mat.time = time.elapsed_secs();
+        mat.resolution = resolution;
+        mat.camera_pos = camera_pos;
+    }
+}

@@ -13,9 +13,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN cargo install trunk
 RUN rustup target add wasm32-unknown-unknown
 
+RUN useradd --create-home --uid 10001 appuser
+
+ENV CARGO_HOME=/home/appuser/.cargo
+
+RUN mkdir -p /home/appuser/.cargo/registry && chown -R appuser:appuser /home/appuser/.cargo
+
 WORKDIR /app
 COPY . .
-RUN useradd --create-home --uid 10001 appuser && chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app
+
 USER appuser
 
 EXPOSE 8080
