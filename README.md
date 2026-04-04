@@ -5,9 +5,10 @@
 ## setup note
 
 ```shell
-brew install just uv gitleaks ripgrep docker(orbstack)
+brew install just uv gitleaks ripgrep
+brew install --cask orbstack # or docker
 # + rust (pinned in Dockerfile), python(pinned in .python-version) (, houdini(pinned in justfile), trunk(Dockerfile exists))
 pre-commit install
 ```
 
-TODO: make devconteiner etc.
+TODO: make devcontainer etc.
