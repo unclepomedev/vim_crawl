@@ -1,7 +1,6 @@
 [build]
 target = "index.html"
 dist = "dist"
-bin = "vim_crawl"
 
 [watch]
 ignore = ["target", ".idea", ".venv", ".git"]
