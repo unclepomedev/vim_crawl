@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: j pch
+        name: j pch
+        entry: j pch
+        language: system
+        pass_filenames: false
