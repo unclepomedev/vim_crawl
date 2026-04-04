@@ -26,7 +26,8 @@ jobs:
 
       - name: Download and install Trunk
         run: |
-          wget -qO- https://github.com/trunk-rs/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+          TRUNK_VERSION="0.21.14"  # pin to avoid breaking changes
+          wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-x86_64-unknown-linux-gnu.tar.gz" | tar -xzf-
           ./trunk --version
 
       - name: Set short git short commit SHA
