@@ -8,7 +8,11 @@ pub fn handle_motion(motion: Motion, move_writer: &mut MessageWriter<MoveIntenti
         Motion::Down => Some((0, 1)),
         Motion::Up => Some((0, -1)),
         Motion::Right => Some((1, 0)),
-        _ => None,
+        motion => {
+            // TODO: Translate advanced Vim motions (WordEndForward, FirstNonBlank, GotoLine, MatchPairs) into grid-based spatial movements.
+            bevy::log::debug!("Unhandled (or Not Implemented) Vim motion: {:?}", motion);
+            None
+        }
     };
 
     if let Some((d_col, d_row)) = delta {
