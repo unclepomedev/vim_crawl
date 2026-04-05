@@ -15,7 +15,7 @@ var<uniform> sea_mat: ElectronSeaMaterial;
 // coordinate space ========================================================
 struct GridSpace {
     ci: vec2<f32>, // cell index
-    cf: vec2<f32>, // inside cell coodinates (0.0 ~ 1.0)
+    cf: vec2<f32>, // inside cell coordinates (0.0 - 1.0)
 }
 
 fn get_grid_space(uv: vec2<f32>, res: vec2<f32>, cam: vec2<f32>, offset: vec2<f32>, tile_size: f32) -> GridSpace {

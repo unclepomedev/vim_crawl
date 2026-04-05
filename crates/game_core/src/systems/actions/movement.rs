@@ -85,4 +85,50 @@ mod tests {
         assert_eq!(pos.col, 0);
         assert_eq!(pos.row, 0);
     }
+
+    #[test]
+    fn move_multiple_events_processed_in_one_frame() {
+        let mut app = setup_test_app();
+
+        let player_entity = app
+            .world_mut()
+            .spawn((Player, GridPosition { col: 5, row: 2 }))
+            .id();
+
+        app.world_mut()
+            .write_message(MoveIntentionEvent { d_col: 1, d_row: 0 });
+        app.world_mut()
+            .write_message(MoveIntentionEvent { d_col: 1, d_row: 0 });
+        app.world_mut().write_message(MoveIntentionEvent {
+            d_col: 0,
+            d_row: -1,
+        });
+        app.update();
+
+        let pos = app.world().get::<GridPosition>(player_entity).unwrap();
+        assert_eq!(pos.col, 7);
+        assert_eq!(pos.row, 1);
+    }
+
+    #[test]
+    fn move_ignores_invalid_intentions_and_keeps_valid_ones() {
+        let mut app = setup_test_app();
+
+        let player_entity = app
+            .world_mut()
+            .spawn((Player, GridPosition { col: 0, row: 0 }))
+            .id();
+
+        app.world_mut().write_message(MoveIntentionEvent {
+            d_col: -1,
+            d_row: 0,
+        });
+        app.world_mut()
+            .write_message(MoveIntentionEvent { d_col: 0, d_row: 1 });
+        app.update();
+
+        let pos = app.world().get::<GridPosition>(player_entity).unwrap();
+        assert_eq!(pos.col, 0);
+        assert_eq!(pos.row, 1);
+    }
 }
