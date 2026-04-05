@@ -1,11 +1,13 @@
 use crate::ast::action::Action;
 use crate::ast::command::ParsedCommand;
 use crate::ast::motion::Motion;
+use crate::ast::operator::Operator;
 use crate::error::ParseError;
 use crate::parser::VimParser;
 use crate::parser::key::Key;
 use crate::parser::mapping::{
-    parse_motion, parse_operator, parse_pending_action, parse_standalone_action, try_parse_count,
+    parse_alias, parse_motion, parse_operator, parse_pending_action, parse_standalone_action,
+    try_parse_count,
 };
 use crate::parser::result::ParseResult;
 use crate::state::Mode;
@@ -17,7 +19,7 @@ pub fn handle(parser: &mut VimParser, key: Key) -> ParseResult {
 
     if let Some(action) = parse_standalone_action(key) {
         match action {
-            Action::EnterInsert => parser.state.mode = Mode::Insert,
+            Action::EnterInsert(_) => parser.state.mode = Mode::Insert,
             Action::EnterVisual => parser.state.mode = Mode::Visual,
             _ => {}
         }
@@ -44,6 +46,17 @@ pub fn handle(parser: &mut VimParser, key: Key) -> ParseResult {
         return handle_motion(parser, motion);
     }
 
+    if let Some(action) = parse_alias(key) {
+        if let Action::Operate(Operator::Change, _) = action {
+            parser.state.mode = Mode::Insert;
+        }
+        let command = ParsedCommand {
+            context: parser.state.context.clone(),
+            action,
+        };
+        return ParseResult::Success(command);
+    }
+
     ParseResult::Invalid(ParseError::UnknownCommand)
 }
 
@@ -60,6 +73,7 @@ pub fn handle_motion(parser: &mut VimParser, motion: Motion) -> ParseResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::action::InsertCommand;
     use crate::ast::motion::Motion;
     use crate::ast::operator::Operator;
     use crate::ast::target::Target;
@@ -112,7 +126,7 @@ mod tests {
             result,
             ParseResult::Success(ParsedCommand {
                 context: CommandContext::default(),
-                action: Action::EnterInsert,
+                action: Action::EnterInsert(InsertCommand::Insert),
             })
         );
         assert_eq!(parser.state.mode, Mode::Insert);
@@ -295,5 +309,33 @@ mod tests {
         }
 
         assert_eq!(parser.state.context.count, None);
+    }
+
+    #[test]
+    fn test_normal_mode_insert_commands() {
+        let test_cases = vec![
+            (Key::Char('i'), InsertCommand::Insert),
+            (Key::Char('a'), InsertCommand::Append),
+            (Key::Char('I'), InsertCommand::InsertAtLineStart),
+            (Key::Char('A'), InsertCommand::AppendAtLineEnd),
+            (Key::Char('o'), InsertCommand::OpenLineBelow),
+            (Key::Char('O'), InsertCommand::OpenLineAbove),
+        ];
+
+        for (input, expected_cmd) in test_cases {
+            let mut parser = VimParser::new();
+            let result = handle(&mut parser, input);
+
+            assert_eq!(
+                result,
+                ParseResult::Success(ParsedCommand {
+                    context: CommandContext::default(),
+                    action: Action::EnterInsert(expected_cmd),
+                }),
+                "Failed on input: {:?}",
+                input
+            );
+            assert_eq!(parser.state.mode, Mode::Insert);
+        }
     }
 }

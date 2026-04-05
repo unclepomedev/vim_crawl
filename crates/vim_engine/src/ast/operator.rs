@@ -3,4 +3,7 @@ pub enum Operator {
     Delete,
     Yank,
     Change,
+    Indent,  // >
+    Outdent, // <
+    Format,  // =
 }

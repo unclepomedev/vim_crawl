@@ -45,7 +45,12 @@ fn dispatch_command(
             motion::handle_motion(motion, move_writer);
         }
         action => {
-            debug!("Action parsed: {:?}", std::mem::discriminant(&action));
+            // TODO: Map the remaining AST actions (Replace, Paste, JoinLines, ToggleCase, and advanced InsertCommands) to game behaviors.
+            // Safely ignored for now to focus on the core gameplay loop.
+            debug!(
+                "Action parsed: {:?} (Not Implemented)",
+                std::mem::discriminant(&action)
+            );
         }
     }
 }

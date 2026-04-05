@@ -17,6 +17,8 @@ pub enum PendingAction {
     Inner,
     Around,
     Register,
+    ReplaceChar, // pressed r and waiting for next char
+    GCommand,    // pressed g and waiting for next char (gg, ge, gi)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
