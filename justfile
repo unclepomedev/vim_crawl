@@ -13,7 +13,7 @@ PROJECT_ROOT := justfile_directory()
 
 # setup ===============================================================================================================
 dump_ex:
-    `@set` -e; \
+    @set -e; \
     trap 'rm -rf {{ clone_bevy }} {{ clone_egui }}' EXIT; \
     echo "==> Cloning Bevy {{ bevy_version }}..."; \
     git clone --depth 1 -b {{ bevy_version }} {{ bevy_repo }} {{ clone_bevy }}; \

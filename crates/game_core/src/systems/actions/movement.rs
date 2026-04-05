@@ -9,8 +9,8 @@ pub fn process_movement_intention(
     map_bounds: Res<MapBounds>,
     mut player_q: Query<&mut GridPosition, With<Player>>,
 ) {
-    for intention in move_reader.read() {
-        if let Ok(mut pos) = player_q.single_mut() {
+    if let Ok(mut pos) = player_q.single_mut() {
+        for intention in move_reader.read() {
             let new_col = pos.col + intention.d_col;
             let new_row = pos.row + intention.d_row;
 
