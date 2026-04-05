@@ -1,6 +1,6 @@
-use crate::components::GridPosition;
 use crate::resources::grid::GridRenderConfig;
 use bevy::prelude::*;
+use game_core::components::grid::GridPosition;
 use game_core::components::player::Player;
 
 pub type PlayerFilter = (With<Player>, Changed<GridPosition>);
