@@ -4,6 +4,7 @@ use game_core::systems::vim::process_vim_input;
 
 pub mod components;
 pub mod material;
+pub mod render;
 pub mod setup;
 pub mod ui;
 
@@ -24,5 +25,6 @@ impl Plugin for GameUiPlugin {
                 render_editor_ui.after(process_vim_input),
             ),
         );
+        app.add_systems(Update, render::sync_grid_to_transform);
     }
 }

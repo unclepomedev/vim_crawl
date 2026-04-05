@@ -1,6 +1,8 @@
-use crate::components::{MainCamera, Player};
+use crate::components::MainCamera;
 use crate::material::ElectronSeaMaterial;
 use bevy::prelude::*;
+use game_core::components::grid::GridPosition;
+use game_core::components::player::Player;
 
 pub fn setup_cameras_and_player(mut commands: Commands) {
     commands.spawn((
@@ -29,6 +31,7 @@ pub fn setup_cameras_and_player(mut commands: Commands) {
             ..default()
         },
         Player,
+        GridPosition { col: 0, row: 0 },
         Transform::from_xyz(0.0, 0.0, 0.0),
     ));
 }
