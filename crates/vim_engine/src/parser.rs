@@ -96,38 +96,87 @@ impl VimParser {
     }
 
     fn resolve_pending(&mut self, pending: PendingAction, key: Key) -> ParseResult {
-        if pending == PendingAction::Register {
-            if let Key::Char(c) = key
-                && validation::is_valid_register(c)
-            {
-                self.state.context.register = Some(c);
-                return ParseResult::Incomplete;
-            }
-            self.state.mode = Mode::Normal;
-            return ParseResult::Invalid(ParseError::UnknownCommand);
+        match pending {
+            PendingAction::Register => self.resolve_register(key),
+            PendingAction::ReplaceChar => self.resolve_replace(key),
+            PendingAction::GCommand => self.resolve_g_command(key),
+            PendingAction::FindForward
+            | PendingAction::FindBackward
+            | PendingAction::TillForward
+            | PendingAction::TillBackward => self.resolve_pending_motion(pending, key),
+            PendingAction::Inner | PendingAction::Around => self.resolve_text_object(pending, key),
         }
+    }
 
+    fn resolve_register(&mut self, key: Key) -> ParseResult {
+        if let Key::Char(c) = key
+            && validation::is_valid_register(c)
+        {
+            self.state.context.register = Some(c);
+            return ParseResult::Incomplete;
+        }
+        self.state.mode = Mode::Normal;
+        ParseResult::Invalid(ParseError::UnknownCommand)
+    }
+
+    fn resolve_replace(&mut self, key: Key) -> ParseResult {
+        self.state.mode = Mode::Normal;
+        if let Key::Char(c) = key {
+            ParseResult::Success(ParsedCommand {
+                context: self.state.context.clone(),
+                action: Action::Replace(c),
+            })
+        } else {
+            ParseResult::Invalid(ParseError::UnknownCommand)
+        }
+    }
+
+    fn resolve_g_command(&mut self, key: Key) -> ParseResult {
+        if let Some(action) = mapping::parse_g_command(key) {
+            // gi -> insert, gg, ge -> normal
+            if let Action::EnterInsert(_) = action {
+                self.state.mode = Mode::Insert;
+            } else {
+                self.state.mode = Mode::Normal;
+            }
+
+            ParseResult::Success(ParsedCommand {
+                context: self.state.context.clone(),
+                action,
+            })
+        } else {
+            self.state.mode = Mode::Normal;
+            ParseResult::Invalid(ParseError::UnknownCommand)
+        }
+    }
+
+    fn resolve_pending_motion(&mut self, pending: PendingAction, key: Key) -> ParseResult {
         if let Some(motion) = mapping::parse_pending_motion(pending, key) {
-            return match self.state.mode {
+            match self.state.mode {
                 Mode::Normal => normal::handle_motion(self, motion),
                 Mode::OperatorPending(op) => operator_pending::handle_motion(self, op, motion),
                 Mode::Visual => unreachable!("Visual mode does not yet support pending actions"),
                 Mode::Insert => ParseResult::Invalid(ParseError::UnknownCommand),
-            };
+            }
+        } else {
+            self.state.mode = Mode::Normal;
+            ParseResult::Invalid(ParseError::InvalidMotion)
         }
+    }
 
+    fn resolve_text_object(&mut self, pending: PendingAction, key: Key) -> ParseResult {
         if let Some(text_obj) = mapping::parse_text_object(pending, key) {
-            return match self.state.mode {
+            match self.state.mode {
                 Mode::OperatorPending(op) => {
                     operator_pending::handle_text_object(self, op, text_obj)
                 }
                 Mode::Visual => unreachable!("Visual mode does not yet support text objects"),
                 _ => ParseResult::Invalid(ParseError::UnknownCommand),
-            };
+            }
+        } else {
+            self.state.mode = Mode::Normal;
+            ParseResult::Invalid(ParseError::InvalidMotion)
         }
-
-        self.state.mode = Mode::Normal;
-        ParseResult::Invalid(ParseError::InvalidMotion)
     }
 
     fn route_input(&mut self, key: Key) -> ParseResult {
@@ -144,7 +193,7 @@ impl VimParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::action::Action;
+    use crate::ast::action::{Action, InsertCommand};
     use crate::ast::command::ParsedCommand;
     use crate::ast::motion::Motion;
     use crate::ast::operator::Operator;
@@ -345,5 +394,74 @@ mod tests {
         assert_eq!(parser.state.mode, Mode::Normal);
         assert_eq!(parser.state.context.count, None);
         assert_eq!(parser.state.context.operator_count, None);
+    }
+
+    #[test]
+    fn test_parser_feed_replace_char() {
+        let mut parser = VimParser::new();
+
+        let res1 = parser.feed(Key::Char('r'));
+        assert_eq!(res1, ParseResult::Incomplete);
+        assert_eq!(
+            parser.state.context.pending_action,
+            Some(PendingAction::ReplaceChar)
+        );
+
+        let res2 = parser.feed(Key::Char('x'));
+        assert_eq!(
+            res2,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Replace('x'),
+            })
+        );
+        assert_eq!(parser.state.context.pending_action, None);
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_parser_feed_g_command_motion() {
+        let mut parser = VimParser::new();
+
+        parser.feed(Key::Char('g'));
+        let res = parser.feed(Key::Char('g'));
+
+        assert_eq!(
+            res,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::Move(Motion::GotoLine),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn test_parser_feed_g_command_insert() {
+        let mut parser = VimParser::new();
+
+        parser.feed(Key::Char('g'));
+        let res = parser.feed(Key::Char('i'));
+
+        assert_eq!(
+            res,
+            ParseResult::Success(ParsedCommand {
+                context: CommandContext::default(),
+                action: Action::EnterInsert(InsertCommand::InsertLast),
+            })
+        );
+        assert_eq!(parser.state.mode, Mode::Insert);
+    }
+
+    #[test]
+    fn test_parser_feed_invalid_g_command() {
+        let mut parser = VimParser::new();
+
+        parser.feed(Key::Char('g'));
+        let res = parser.feed(Key::Char('x'));
+
+        assert_eq!(res, ParseResult::Invalid(ParseError::UnknownCommand));
+        assert_eq!(parser.state.context.pending_action, None);
+        assert_eq!(parser.state.mode, Mode::Normal);
     }
 }

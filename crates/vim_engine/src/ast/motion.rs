@@ -6,8 +6,13 @@ pub enum Motion {
     Down,
     WordForward,
     WordBackward,
-    StartOfLine,
-    EndOfLine,
+    WordEndForward,  // e
+    WordEndBackward, // ge
+    StartOfLine,     // 0
+    FirstNonBlank,   // ^
+    EndOfLine,       // $
+    GotoLine,        // G, gg
+    MatchPairs,      // %
     FindForward(char),
     FindBackward(char),
     TillForward(char),
