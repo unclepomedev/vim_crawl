@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-
-#[derive(Component)]
-pub struct Player;
+pub use game_core::components::grid::GridPosition;
+pub use game_core::components::player::Player;
 
 #[derive(Component)]
 pub struct MainCamera;

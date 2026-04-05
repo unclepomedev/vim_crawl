@@ -1,3 +1,8 @@
+# POSIX shell is required. On Windows, use Git Bash or WSL.
+set shell := ["sh", "-c"]
+_check-shell:
+    @command -v sh >/dev/null || (echo "Error: 'sh' not found. Please install a POSIX shell." && exit 1)
+
 bevy_version := "v0.18.1"
 bevy_egui_version := "v0.39.1"
 bevy_repo := "https://github.com/bevyengine/bevy.git"
@@ -8,7 +13,7 @@ PROJECT_ROOT := justfile_directory()
 
 # setup ===============================================================================================================
 dump_ex:
-    `@set` -e; \
+    @set -e; \
     trap 'rm -rf {{ clone_bevy }} {{ clone_egui }}' EXIT; \
     echo "==> Cloning Bevy {{ bevy_version }}..."; \
     git clone --depth 1 -b {{ bevy_version }} {{ bevy_repo }} {{ clone_bevy }}; \
@@ -36,11 +41,7 @@ test-rs:
 test: test-rs
 
 # run ===============================================================================================================
-
-# setup example (see also Dockerfile):
-#  brew install trunk
-#  cargo install wasm-server-runner
-#  rustup target add wasm32-unknown-unknown
+# see also Dockerfile if setup needed:
 run-wasm:
     trunk serve
 
@@ -50,10 +51,10 @@ run-docker-compose-up-build:
 # houdini ============================================================================================================
 HOUDINI_VEX_PATH := PROJECT_ROOT + "/vex/include"
 # Override via HOUDINI_RESOURCES env var for your platform/version
-HOUDINI_RESOURCES := env_var_or_default("HOUDINI_RESOURCES", "/Applications/Houdini/Houdini21.0.631/Frameworks/Houdini.framework/Versions/Current/Resources")
+HOUDINI_RESOURCES := env("HOUDINI_RESOURCES", "/Applications/Houdini/Houdini21.0.631/Frameworks/Houdini.framework/Versions/Current/Resources")
 # This env var should be set for untrusted localhost.
-HOUDINI_RAMEN_TOKEN := env_var_or_default("HOUDINI_RAMEN_TOKEN", "houdini_ramen_secret_2026")
-HOUDINI_RAMEN_PORT := env_var_or_default("HOUDINI_RAMEN_PORT", "18080")
+HOUDINI_RAMEN_TOKEN := env("HOUDINI_RAMEN_TOKEN", "houdini_ramen_secret_2026")
+HOUDINI_RAMEN_PORT := env("HOUDINI_RAMEN_PORT", "18080")
 
 houdini-link:
     HOUDINI_VEX_PATH="{{ HOUDINI_VEX_PATH }};&" HOUDINI_RAMEN_TOKEN={{ HOUDINI_RAMEN_TOKEN }} HOUDINI_RAMEN_PORT={{ HOUDINI_RAMEN_PORT }} {{ HOUDINI_RESOURCES }}/bin/houdini ramen_assets/link_server.py
