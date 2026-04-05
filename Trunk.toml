@@ -3,4 +3,4 @@ target = "index.html"
 dist = "dist"
 
 [watch]
-ignore = ["target", ".idea", ".venv", ".git"]
+ignore = ["target", "dist", ".idea", ".venv", ".git", ".ruff_cache", "misc", "tools"]

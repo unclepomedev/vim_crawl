@@ -3,9 +3,10 @@
 
 struct ElectronSeaMaterial {
     time: f32,
+    tile_size: f32,
+    offset: vec2<f32>,
     resolution: vec2<f32>,
     camera_pos: vec2<f32>,
-    padding: vec2<f32>,
 }
 
 @group(0) @binding(2)
@@ -18,11 +19,13 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
     let res = sea_mat.resolution;
     let cam = sea_mat.camera_pos;
 
-    let screen_pos = (uv - 0.5) * res;
-    let world_pos = vec2<f32>(screen_pos.x + cam.x, -screen_pos.y + cam.y);
+    let pixel_pos = (uv - 0.5) * res * vec2<f32>(1.0, -1.0);
+    let world_pos = pixel_pos + cam;
 
-    let scale = 0.02;
-    let cell = world_pos * scale;
+    let cell = vec2<f32>(
+        (world_pos.x - sea_mat.offset.x) / sea_mat.tile_size,
+        (sea_mat.offset.y - world_pos.y) / sea_mat.tile_size
+    );
     let ci = floor(cell);
     let cf = fract(cell);
 
