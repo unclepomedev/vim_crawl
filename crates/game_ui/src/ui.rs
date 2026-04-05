@@ -43,7 +43,7 @@ pub fn render_editor_ui(
 fn render_status_line(ui: &mut egui::Ui, vim_state: &VimState) {
     ui.add_space(4.0);
 
-    let mode_str = format!("-- {:?} --", vim_state.parser.state.mode).to_uppercase();
+    let mode_str = vim_state.get_mode_display_string();
 
     ui.label(
         egui::RichText::new(mode_str)
