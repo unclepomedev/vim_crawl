@@ -1,32 +1,28 @@
+mod weapons;
+
+use crate::weapons::turret::{base, pitch_barrel, yaw};
 use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::live_link::send_to_houdini;
 use houdini_ramen::core::types::ContainerType::Geo;
-use houdini_ramen::generated::sop::SopBox;
-use houdini_ramen::generated::sop::{SopAttribwrangle, SopAttribwrangleClass};
-use houdini_ramen::helpers::loops::add_foreach_loop;
+use houdini_ramen::sop::SopMerge;
 
 fn main() {
     let mut graph = NodeGraph::new("/obj/geo1")
         .with_auto_clear()
         .with_auto_create(Geo);
 
-    let box_node = graph.add(SopBox::new("base_box").with_size([2.0, 2.0, 2.0]));
+    let base_node = base::build(&mut graph);
+    let yaw_node = yaw::build(&mut graph, &base_node);
+    let pitch_node = pitch_barrel::build(&mut graph);
 
-    let loop_end = add_foreach_loop(&mut graph, "process_points", &box_node, |g, begin| {
-        g.add(
-            SopAttribwrangle::new("inner_process")
-                .set_input(begin)
-                .with_class(SopAttribwrangleClass::Primitives)
-                .with_snippet(include_str!("vex/001_1_yp1.vfl")),
-        )
-    });
-
-    let _final_wrangle = graph.add(
-        SopAttribwrangle::new("post_process")
-            .set_input(&loop_end)
-            .with_class(SopAttribwrangleClass::Primitives)
-            .with_snippet(include_str!("vex/001_2_set.vfl")),
+    let merge = graph.add(
+        SopMerge::new("merge")
+            .set_input_at(0, &base_node)
+            .set_input_at(1, &yaw_node)
+            .set_input_at(2, &pitch_node),
     );
+
+    graph.set_display(&merge);
 
     let python_script = graph.build();
     println!("{}", python_script);
