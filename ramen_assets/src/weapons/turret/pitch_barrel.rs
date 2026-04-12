@@ -1,11 +1,12 @@
 use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::NodeOutput;
 use houdini_ramen::sop::{
-    SopBoolean, SopBooleanBooleanop, SopNormal, SopNormalMethod, SopPolybevel, SopTube,
+    SopBoolean, SopBooleanBooleanop, SopMatchsize, SopMatchsizeGoalY, SopMatchsizeJustifyX,
+    SopMatchsizeJustifyY, SopMatchsizeJustifyZ, SopNormal, SopNormalMethod, SopPolybevel, SopTube,
     SopTubeOrient, SopTubeType, SopXform,
 };
 
-pub fn build(graph: &mut NodeGraph) -> NodeOutput {
+pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOutput {
     let pitch_joint = graph.add(
         SopTube::new("pitch_joint")
             .with_type(SopTubeType::Polygon)
@@ -54,10 +55,20 @@ pub fn build(graph: &mut NodeGraph) -> NodeOutput {
             .with_cuspangle(40.0),
     );
 
+    let pitch_match_base = graph.add(
+        SopMatchsize::new("pitch_match_base")
+            .set_input(&pitch_normals)
+            .set_input_at(1, base_node)
+            .with_justify_x(SopMatchsizeJustifyX::None)
+            .with_justify_y(SopMatchsizeJustifyY::Center)
+            .with_goal_y(SopMatchsizeGoalY::Max)
+            .with_justify_z(SopMatchsizeJustifyZ::None),
+    );
+
     let pitch_mount = graph.add(
         SopXform::new("pitch_mount")
-            .set_input(&pitch_normals)
-            .with_t([0.0, 2.2, 0.0]),
+            .set_input(&pitch_match_base)
+            .with_t([0.0, 0.7, 0.0]),
     );
     NodeOutput::from(&pitch_mount)
 }

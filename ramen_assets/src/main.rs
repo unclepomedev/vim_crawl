@@ -13,7 +13,7 @@ fn main() {
 
     let base_node = base::build(&mut graph);
     let yaw_node = yaw::build(&mut graph, &base_node);
-    let pitch_node = pitch_barrel::build(&mut graph);
+    let pitch_node = pitch_barrel::build(&mut graph, &base_node);
 
     let merge = graph.add(
         SopMerge::new("merge")
