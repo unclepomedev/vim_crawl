@@ -3058,9 +3058,127 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 
 [[package]]
 name = "houdini_ramen"
-version = "0.0.1"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8e8992d1d2ec96059848b1caa5835d9b2dea4eff316424a1889b308d8851e82"
+checksum = "72467c92b908231e139fe7b50719d5d7ad09f64e07335fec1fb11c211700a204"
+dependencies = [
+ "houdini_ramen_chop",
+ "houdini_ramen_cop2",
+ "houdini_ramen_core",
+ "houdini_ramen_dop",
+ "houdini_ramen_driver",
+ "houdini_ramen_helpers",
+ "houdini_ramen_lop",
+ "houdini_ramen_object",
+ "houdini_ramen_sop",
+ "houdini_ramen_top",
+ "houdini_ramen_vop",
+]
+
+[[package]]
+name = "houdini_ramen_chop"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32c6e706dcbd78a0457808c629f6d8b9f5ca9c649cbc64ae495ddf1bdf115b20"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_cop2"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7371bae630bad5b8dfffea5dfb16848b0a67203b66244a5c4e8f7d266c5d1f3a"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_core"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38c2b8cd2a71869df324f398458e2d4c3cee15331e89151a3631d71a6568f339"
+
+[[package]]
+name = "houdini_ramen_dop"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cad15b1faaed99e6c50cde0ee8a4ce1b80a87f385abb6eb60fe66913173f4092"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_driver"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59f43b8a59cf0cfc5d7dc65d786cf599d01e942bd87afa61691563a73ca7347e"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_helpers"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d355c38ffd41be5f557dd49707940f1e02ef8219bfa740d24bfe7169a2ef8265"
+dependencies = [
+ "houdini_ramen_chop",
+ "houdini_ramen_cop2",
+ "houdini_ramen_core",
+ "houdini_ramen_dop",
+ "houdini_ramen_driver",
+ "houdini_ramen_lop",
+ "houdini_ramen_object",
+ "houdini_ramen_sop",
+ "houdini_ramen_top",
+ "houdini_ramen_vop",
+]
+
+[[package]]
+name = "houdini_ramen_lop"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d3d36032145f909283e9194c9a13e18c4b45ef08e34dbdad47967647bf411bd"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_object"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19f5c315d1ce34936f69f139331437920c28b345faeb4b543b1727ce7dd2b7b0"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_sop"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db6e88eac8c977f2ce2a9cc1c81fbc396488b36be2434a27ada903377cce3554"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_top"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "259ea1bcc66cb28ebdfc2d58b330eb045e4fc410b6c00c7ecd809e19358646de"
+dependencies = [
+ "houdini_ramen_core",
+]
+
+[[package]]
+name = "houdini_ramen_vop"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62bfbe3d849cefc3e69fb0c38270af5c27ff064ab0db46c0c9f48360a3b81c49"
+dependencies = [
+ "houdini_ramen_core",
+]
 
 [[package]]
 name = "icu_collections"
