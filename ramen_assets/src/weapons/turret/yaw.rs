@@ -1,8 +1,8 @@
 use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::NodeOutput;
 use houdini_ramen::sop::{
-    SopBoolean, SopBooleanBooleanop, SopBox, SopMatchsize, SopMatchsizeGoalY, SopMatchsizeJustifyY,
-    SopNormal, SopNormalMethod, SopPolybevel, SopTube, SopTubeType, SopXform,
+    SopBoolean, SopBooleanBooleanop, SopBox, SopColor, SopMatchsize, SopMatchsizeGoalY,
+    SopMatchsizeJustifyY, SopNormal, SopNormalMethod, SopTube, SopTubeType, SopXform,
 };
 
 pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOutput {
@@ -30,17 +30,9 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_booleanop(SopBooleanBooleanop::Subtract),
     );
 
-    let yaw_bevel = graph.add(
-        SopPolybevel::new("yaw_bevel")
-            .set_input(&bool_yaw)
-            .with_ignoreflatedges(true)
-            .with_offset(0.02)
-            .with_divisions(2),
-    );
-
     let yaw_mount = graph.add(
         SopMatchsize::new("yaw_mount")
-            .set_input(&yaw_bevel)
+            .set_input(&bool_yaw)
             .set_input_at(1, base_node)
             .with_justify_y(SopMatchsizeJustifyY::Min)
             .with_goal_y(SopMatchsizeGoalY::Max),
@@ -52,5 +44,12 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_method(SopNormalMethod::ByFaceArea)
             .with_cuspangle(40.0),
     );
-    NodeOutput::from(&yaw_normals)
+
+    let yaw_color = graph.add(
+        SopColor::new("yaw_color")
+            .set_input(&yaw_normals)
+            .with_color([0.2, 0.2, 0.2]),
+    );
+
+    NodeOutput::from(&yaw_color)
 }

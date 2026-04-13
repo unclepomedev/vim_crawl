@@ -1,0 +1,7 @@
+float freq = chf("freq");
+float noise_scale = chf("noise_scale");
+
+float base_flow = sin(@P.y * freq) * 0.5 + 0.5;
+float spatial_noise = noise(@P * noise_scale);
+
+@Cd.r = base_flow * spatial_noise;
