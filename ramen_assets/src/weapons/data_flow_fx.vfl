@@ -1,0 +1,5 @@
+float noise_scale = chf("noise_scale");
+float noise_intensity = chf("noise_intensity");
+
+float spatial_noise = noise(@P * noise_scale) * noise_intensity;
+@Cd.r = clamp(spatial_noise, 0.0, 1.0);

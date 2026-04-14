@@ -2,7 +2,7 @@ use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::NodeOutput;
 use houdini_ramen::sop::{
     SopBoolean, SopBooleanBooleanop, SopBox, SopColor, SopMatchsize, SopMatchsizeGoalY,
-    SopMatchsizeJustifyY, SopNormal, SopNormalMethod, SopTube, SopTubeType, SopXform,
+    SopMatchsizeJustifyY, SopTube, SopTubeType, SopXform,
 };
 
 pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOutput {
@@ -38,17 +38,10 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_goal_y(SopMatchsizeGoalY::Max),
     );
 
-    let yaw_normals = graph.add(
-        SopNormal::new("yaw_normals")
-            .set_input(&yaw_mount)
-            .with_method(SopNormalMethod::ByFaceArea)
-            .with_cuspangle(40.0),
-    );
-
     let yaw_color = graph.add(
         SopColor::new("yaw_color")
-            .set_input(&yaw_normals)
-            .with_color([0.2, 0.2, 0.2]),
+            .set_input(&yaw_mount)
+            .with_color([0.0, 1.0, 0.0]),
     );
 
     NodeOutput::from(&yaw_color)

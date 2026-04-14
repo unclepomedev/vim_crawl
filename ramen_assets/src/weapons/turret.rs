@@ -1,8 +1,8 @@
 use crate::helpers::BuildGraphOutput;
 use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::ContainerType::Geo;
-use houdini_ramen::core::types::NodeOutput;
-use houdini_ramen::sop::{SopMerge, SopTexture};
+use houdini_ramen::core::types::{NodeOutput, SpareFloat};
+use houdini_ramen::sop::{SopAttribwrangle, SopMerge, SopNormal, SopNormalMethod, SopTexture};
 
 pub mod base;
 pub mod pitch_barrel;
@@ -23,11 +23,34 @@ pub fn build_turret() -> BuildGraphOutput {
             .set_input_at(2, &pitch_node),
     );
 
-    let dummy_uv = graph.add(SopTexture::new("dummy_uv").set_input(&merge));
+    let calc_normals = graph.add(
+        SopNormal::new("calc_normals")
+            .set_input(&merge)
+            .with_method(SopNormalMethod::ByFaceArea)
+            .with_cuspangle(40.0),
+    );
+
+    let data_flow_fx = graph.add(
+        SopAttribwrangle::new("data_flow_fx")
+            .set_input(&calc_normals)
+            .with_snippet(include_str!("data_flow_fx.vfl"))
+            .add_spare(
+                SpareFloat::new("noise_scale", "Noise Scale")
+                    .with_default(5.0)
+                    .with_range(0.1, 20.0),
+            )
+            .add_spare(
+                SpareFloat::new("noise_intensity", "Noise Intensity")
+                    .with_default(1.0)
+                    .with_range(0.0, 2.0),
+            ),
+    );
+
+    let dummy_uv = graph.add(SopTexture::new("dummy_uv").set_input(&data_flow_fx));
 
     BuildGraphOutput {
         graph,
         last_node: NodeOutput::from(&dummy_uv),
-        display_node: NodeOutput::from(&merge),
+        display_node: NodeOutput::from(&data_flow_fx),
     }
 }
