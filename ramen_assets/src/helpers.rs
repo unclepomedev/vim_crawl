@@ -8,7 +8,7 @@ pub struct BuildGraphOutput {
     pub display_node: NodeOutput,
 }
 
-pub fn export_glb(graph: &mut NodeGraph, name: &str, input: &NodeOutput, file_name: &str) {
+pub fn add_glb_export_node(graph: &mut NodeGraph, name: &str, input: &NodeOutput, file_name: &str) {
     let export_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("assets")
@@ -16,7 +16,7 @@ pub fn export_glb(graph: &mut NodeGraph, name: &str, input: &NodeOutput, file_na
         .join(file_name);
     let export_path = export_path.to_string_lossy().into_owned();
 
-    graph.add(
+    let _rop = graph.add(
         SopRopGltf::new(name)
             .set_input(input)
             .with_file(&export_path),

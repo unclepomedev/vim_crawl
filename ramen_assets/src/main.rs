@@ -1,13 +1,13 @@
 mod helpers;
 mod weapons;
 
-use crate::helpers::export_glb;
+use crate::helpers::add_glb_export_node;
 use crate::weapons::turret;
 use houdini_ramen::core::live_link::send_to_houdini;
 
 fn main() {
     let mut result = turret::build_turret();
-    export_glb(
+    add_glb_export_node(
         &mut result.graph,
         "export_turret",
         &result.last_node,
