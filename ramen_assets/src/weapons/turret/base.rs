@@ -1,8 +1,8 @@
 use houdini_ramen::core::graph::NodeGraph;
-use houdini_ramen::core::types::{NodeOutput, SpareFloat};
+use houdini_ramen::core::types::NodeOutput;
 use houdini_ramen::sop::{
-    SopAttribwrangle, SopBoolean, SopBooleanBooleanop, SopBox, SopColor, SopCopyxform,
-    SopMatchsize, SopMatchsizeJustifyY, SopNormal, SopNormalMethod, SopTube, SopTubeType,
+    SopBoolean, SopBooleanBooleanop, SopBox, SopColor, SopCopyxform, SopMatchsize,
+    SopMatchsizeJustifyY, SopTube, SopTubeType,
 };
 
 pub fn build(graph: &mut NodeGraph) -> NodeOutput {
@@ -107,27 +107,5 @@ pub fn build(graph: &mut NodeGraph) -> NodeOutput {
             .with_booleanop(SopBooleanBooleanop::Union),
     );
 
-    let calc_normals = graph.add(
-        SopNormal::new("calc_normals")
-            .set_input(&base_union)
-            .with_method(SopNormalMethod::ByFaceArea)
-            .with_cuspangle(40.0),
-    );
-
-    let data_flow_fx = graph.add(
-        SopAttribwrangle::new("data_flow_fx")
-            .set_input(&calc_normals)
-            .with_snippet(include_str!("data_flow_fx.vfl"))
-            .add_spare(
-                SpareFloat::new("freq", "Freq")
-                    .with_default(15.0)
-                    .with_range(0.0, 100.0),
-            )
-            .add_spare(
-                SpareFloat::new("noise_scale", "Noise Scale")
-                    .with_default(5.0)
-                    .with_range(0.1, 20.0),
-            ),
-    );
-    NodeOutput::from(&data_flow_fx)
+    NodeOutput::from(&base_union)
 }

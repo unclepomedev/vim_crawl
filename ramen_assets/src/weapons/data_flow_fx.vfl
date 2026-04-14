@@ -1,0 +1,4 @@
+float noise_scale = chf("noise_scale");
+float noise_intensity = chf("noise_intensity");
+
+@Cd.r = fit(noise(@P * noise_scale), 0.0, 1.0, 0.0, noise_intensity);

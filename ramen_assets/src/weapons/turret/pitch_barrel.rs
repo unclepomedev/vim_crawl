@@ -2,8 +2,8 @@ use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::NodeOutput;
 use houdini_ramen::sop::{
     SopBoolean, SopBooleanBooleanop, SopBox, SopColor, SopCopyxform, SopMatchsize,
-    SopMatchsizeGoalY, SopMatchsizeJustifyX, SopMatchsizeJustifyY, SopMatchsizeJustifyZ, SopNormal,
-    SopNormalMethod, SopTube, SopTubeOrient, SopTubeType, SopXform,
+    SopMatchsizeGoalY, SopMatchsizeJustifyX, SopMatchsizeJustifyY, SopMatchsizeJustifyZ, SopTube,
+    SopTubeOrient, SopTubeType, SopXform,
 };
 
 pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOutput {
@@ -122,16 +122,9 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_booleanop(SopBooleanBooleanop::Union),
     );
 
-    let pitch_normals = graph.add(
-        SopNormal::new("pitch_normals")
-            .set_input(&bool_pitch_barrel)
-            .with_method(SopNormalMethod::ByFaceArea)
-            .with_cuspangle(40.0),
-    );
-
     let pitch_match_base = graph.add(
         SopMatchsize::new("pitch_match_base")
-            .set_input(&pitch_normals)
+            .set_input(&bool_pitch_barrel)
             .set_input_at(1, base_node)
             .with_justify_x(SopMatchsizeJustifyX::None)
             .with_justify_y(SopMatchsizeJustifyY::Center)
@@ -148,7 +141,7 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
     let pitch_color = graph.add(
         SopColor::new("pitch_color")
             .set_input(&pitch_mount)
-            .with_color([0.2, 0.2, 0.2]),
+            .with_color([0.0, 1.0, 0.0]),
     );
 
     NodeOutput::from(&pitch_color)
