@@ -4,7 +4,7 @@ use houdini_ramen::core::types::ContainerType::Geo;
 use houdini_ramen::core::types::{NodeOutput, SpareFloat};
 use houdini_ramen::sop::{
     SopAttribwrangle, SopAttribwrangleClass, SopMerge, SopNormal, SopNormalMethod, SopPack,
-    SopTexture,
+    SopTexture, SopXform,
 };
 
 pub mod base;
@@ -75,9 +75,15 @@ pub fn build_turret() -> BuildGraphOutput {
             .set_input_at(2, &processed_barrel),
     );
 
+    let normalize_all = graph.add(
+        SopXform::new("normalize_all")
+            .set_input(&merge)
+            .with_scale(0.25),
+    );
+
     BuildGraphOutput {
         graph,
-        last_node: NodeOutput::from(&merge),
-        display_node: NodeOutput::from(&merge),
+        last_node: NodeOutput::from(&normalize_all),
+        display_node: NodeOutput::from(&normalize_all),
     }
 }

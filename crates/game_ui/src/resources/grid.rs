@@ -11,7 +11,7 @@ pub struct GridRenderConfig {
 impl Default for GridRenderConfig {
     fn default() -> Self {
         Self {
-            tile_size: 40.0,
+            tile_size: 80.0,
             offset_x: -200.0,
             offset_y: 100.0,
         }
