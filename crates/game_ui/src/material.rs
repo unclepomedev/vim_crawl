@@ -60,6 +60,6 @@ pub fn update_world_material(
         mat.resolution = resolution;
         mat.camera_pos = camera_pos;
         mat.tile_size = config.tile_size;
-        mat.offset = Vec2::new(config.offset_x, config.offset_y);
+        mat.offset = Vec2::new(config.offset_x, config.offset_z);
     }
 }
