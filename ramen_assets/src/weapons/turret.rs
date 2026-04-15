@@ -2,36 +2,30 @@ use crate::helpers::BuildGraphOutput;
 use houdini_ramen::core::graph::NodeGraph;
 use houdini_ramen::core::types::ContainerType::Geo;
 use houdini_ramen::core::types::{NodeOutput, SpareFloat};
-use houdini_ramen::sop::{SopAttribwrangle, SopMerge, SopNormal, SopNormalMethod, SopTexture};
+use houdini_ramen::sop::{
+    SopAttribwrangle, SopAttribwrangleClass, SopMerge, SopNormal, SopNormalMethod, SopPack,
+    SopTexture,
+};
 
 pub mod base;
 pub mod pitch_barrel;
 pub mod yaw;
 
-pub fn build_turret() -> BuildGraphOutput {
-    let mut graph = NodeGraph::new("/obj/turret")
-        .with_auto_clear()
-        .with_auto_create(Geo);
-    let base_node = base::build(&mut graph);
-    let yaw_node = yaw::build(&mut graph, &base_node);
-    let pitch_node = pitch_barrel::build(&mut graph, &base_node);
-
-    let merge = graph.add(
-        SopMerge::new("merge")
-            .set_input_at(0, &base_node)
-            .set_input_at(1, &yaw_node)
-            .set_input_at(2, &pitch_node),
-    );
-
+fn process_and_pack(
+    graph: &mut NodeGraph,
+    input: &NodeOutput,
+    part_name: &str,
+    export_name: &str,
+) -> NodeOutput {
     let calc_normals = graph.add(
-        SopNormal::new("calc_normals")
-            .set_input(&merge)
+        SopNormal::new(&format!("normals_{}", part_name))
+            .set_input(input)
             .with_method(SopNormalMethod::ByFaceArea)
             .with_cuspangle(40.0),
     );
 
     let data_flow_fx = graph.add(
-        SopAttribwrangle::new("data_flow_fx")
+        SopAttribwrangle::new(&format!("fx_{}", part_name))
             .set_input(&calc_normals)
             .with_snippet(include_str!("data_flow_fx.vfl"))
             .add_spare(
@@ -46,11 +40,44 @@ pub fn build_turret() -> BuildGraphOutput {
             ),
     );
 
-    let dummy_uv = graph.add(SopTexture::new("dummy_uv").set_input(&data_flow_fx));
+    let dummy_uv =
+        graph.add(SopTexture::new(&format!("uv_{}", part_name)).set_input(&data_flow_fx));
+
+    let pack = graph.add(SopPack::new(&format!("pack_{}", part_name)).set_input(&dummy_uv));
+
+    let name_attr = graph.add(
+        SopAttribwrangle::new(&format!("name_{}", part_name))
+            .set_input(&pack)
+            .with_class(SopAttribwrangleClass::Primitives)
+            .with_snippet(&format!("s@name = \"{}\";", export_name)),
+    );
+
+    NodeOutput::from(&name_attr)
+}
+
+pub fn build_turret() -> BuildGraphOutput {
+    let mut graph = NodeGraph::new("/obj/turret")
+        .with_auto_clear()
+        .with_auto_create(Geo);
+
+    let base_node = base::build(&mut graph);
+    let yaw_node = yaw::build(&mut graph, &base_node);
+    let pitch_node = pitch_barrel::build(&mut graph, &base_node);
+
+    let processed_base = process_and_pack(&mut graph, &base_node, "base", "base");
+    let processed_yaw = process_and_pack(&mut graph, &yaw_node, "yaw", "yaw");
+    let processed_barrel = process_and_pack(&mut graph, &pitch_node, "pitch", "pitch");
+
+    let merge = graph.add(
+        SopMerge::new("merge")
+            .set_input_at(0, &processed_base)
+            .set_input_at(1, &processed_yaw)
+            .set_input_at(2, &processed_barrel),
+    );
 
     BuildGraphOutput {
         graph,
-        last_node: NodeOutput::from(&dummy_uv),
-        display_node: NodeOutput::from(&data_flow_fx),
+        last_node: NodeOutput::from(&merge),
+        display_node: NodeOutput::from(&merge),
     }
 }
