@@ -13,7 +13,7 @@ pub fn sync_grid_to_transform(
         if config_changed || pos.is_changed() {
             transform.translation.x = config.offset_x + (pos.col as f32 * config.tile_size);
             transform.translation.y = 0.0;
-            transform.translation.z = -(config.offset_z - (pos.row as f32 * config.tile_size));
+            transform.translation.z = config.offset_z + (pos.row as f32 * config.tile_size);
         }
     }
 }

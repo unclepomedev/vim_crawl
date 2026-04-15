@@ -17,6 +17,7 @@ fn process_and_pack(
     part_name: &str,
     export_name: &str,
 ) -> NodeOutput {
+    // Apply FX before packing to preserve attribute integrity for Bevy shaders.
     let calc_normals = graph.add(
         SopNormal::new(&format!("normals_{}", part_name))
             .set_input(input)
@@ -75,6 +76,8 @@ pub fn build_turret() -> BuildGraphOutput {
             .set_input_at(2, &processed_barrel),
     );
 
+    // Normalize entire assembly to a 1.0 unit scale to ensure
+    // consistent "Unit Cube" behavior in the game engine.
     let normalize_all = graph.add(
         SopXform::new("normalize_all")
             .set_input(&merge)

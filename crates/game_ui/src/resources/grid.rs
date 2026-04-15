@@ -13,7 +13,7 @@ impl Default for GridRenderConfig {
         Self {
             tile_size: 80.0,
             offset_x: -200.0,
-            offset_z: 100.0,
+            offset_z: -120.0,
         }
     }
 }
