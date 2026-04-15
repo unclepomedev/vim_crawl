@@ -7,6 +7,18 @@ use game_core::components::grid::GridPosition;
 use game_core::components::player::Player;
 use std::f32::consts::FRAC_PI_2;
 
+const MODEL_OCCUPATION_RATE: f32 = 0.8;
+pub fn sync_player_scale_on_grid_config_change(
+    config: Res<GridRenderConfig>,
+    mut query: Query<&mut Transform, With<Player>>,
+) {
+    if config.is_changed() {
+        let scale = config.tile_size * MODEL_OCCUPATION_RATE;
+        for mut transform in query.iter_mut() {
+            transform.scale = Vec3::splat(scale);
+        }
+    }
+}
 pub fn setup_cameras_and_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -47,7 +59,7 @@ pub fn setup_cameras_and_player(
         Transform::from_xyz(1.0, 3.0, 2.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
-    let scale = config.tile_size * 0.8;
+    let scale = config.tile_size * MODEL_OCCUPATION_RATE;
 
     commands.spawn((
         SceneRoot(asset_server.load("models/turret.glb#Scene0")),
