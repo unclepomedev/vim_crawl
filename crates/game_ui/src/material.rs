@@ -52,7 +52,7 @@ pub fn update_world_material(
 
     let camera_pos = camera_q
         .single()
-        .map(|t| Vec2::new(t.translation.x, t.translation.y))
+        .map(|t| Vec2::new(t.translation.x, -t.translation.z))
         .unwrap_or(Vec2::ZERO);
 
     for mut mat in &mut mat_q {
@@ -60,6 +60,6 @@ pub fn update_world_material(
         mat.resolution = resolution;
         mat.camera_pos = camera_pos;
         mat.tile_size = config.tile_size;
-        mat.offset = Vec2::new(config.offset_x, config.offset_y);
+        mat.offset = Vec2::new(config.offset_x, config.offset_z);
     }
 }

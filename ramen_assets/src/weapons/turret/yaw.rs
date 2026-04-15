@@ -30,6 +30,7 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_booleanop(SopBooleanBooleanop::Subtract),
     );
 
+    // Create a cradle for the pitch joint and mount it flush to the base top.
     let yaw_mount = graph.add(
         SopMatchsize::new("yaw_mount")
             .set_input(&bool_yaw)

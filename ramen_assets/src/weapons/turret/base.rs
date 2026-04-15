@@ -6,6 +6,7 @@ use houdini_ramen::sop::{
 };
 
 pub fn build(graph: &mut NodeGraph) -> NodeOutput {
+    // Radii (1.5, 2.0) define the base scale, which will be normalized to 1.0m logic.
     let core_tube = graph.add(
         SopTube::new("core_tube")
             .with_type(SopTubeType::Polygon)
@@ -51,6 +52,7 @@ pub fn build(graph: &mut NodeGraph) -> NodeOutput {
             .with_r([0.0, 45.0, 0.0]),
     );
 
+    // Subtract slots and fins to create mechanical detail via "BInsideA" group coloring.
     let bool_slice = graph.add(
         SopBoolean::new("bool_slice")
             .set_input(&armor_color)

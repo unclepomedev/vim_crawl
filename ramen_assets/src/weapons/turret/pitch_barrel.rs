@@ -101,6 +101,7 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_booleanop(SopBooleanBooleanop::Subtract),
     );
 
+    // Align barrel tail to origin to keep the pitch rotation pivot at the joint center.
     let barrel_match = graph.add(
         SopMatchsize::new("barrel_match")
             .set_input(&hollow_barrel)
@@ -122,6 +123,7 @@ pub fn build(graph: &mut NodeGraph, base_node: impl Into<NodeOutput>) -> NodeOut
             .with_booleanop(SopBooleanBooleanop::Union),
     );
 
+    // GoalY::Max stacks the pitch assembly precisely on the base's top surface.
     let pitch_match_base = graph.add(
         SopMatchsize::new("pitch_match_base")
             .set_input(&bool_pitch_barrel)

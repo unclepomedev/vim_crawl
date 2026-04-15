@@ -9,4 +9,4 @@ bevy_v0.18.1_examples.md
 bevy_egui_v0.39.1_examples.md
 
 dist
-assets/models/
+#assets/models/  TODO: delete and ignore assets at a certain point.
