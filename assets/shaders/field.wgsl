@@ -8,9 +8,7 @@ struct ElectronSeaMaterial {
     offset: vec2<f32>,
     resolution: vec2<f32>,
     camera_pos: vec2<f32>,
-    bounds: vec4<f32>,
-    _pad0: f32,
-    _pad1: vec2<f32>
+    bounds: vec4<f32>
 }
 
 @group(0) @binding(2)

@@ -19,8 +19,6 @@ pub struct ElectronSeaMaterial {
     pub resolution: Vec2, // 8 bytes
     pub camera_pos: Vec2, // 8 bytes
     pub bounds: Vec4,     // 16 bytes,  x: max_col, y: max_row, z: enemy_spawn_cols, w: unused
-    pub _pad0: f32,       // 4 bytes
-    pub _pad1: Vec2,      // 8 bytes
 }
 
 //noinspection ALL: suppress "Trait `WriteInto` is not implemented for `ElectronSeaMaterial`"

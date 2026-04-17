@@ -82,27 +82,14 @@ pub fn setup_cameras_and_player(
 /// Recalculate [GridRenderConfig] when the window is resized.
 pub fn recalculate_grid_on_window_resize(
     mut config: ResMut<GridRenderConfig>,
+    mut resize_events: MessageReader<bevy::window::WindowResized>,
     windows: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let Ok(window) = windows.single() else { return };
-
-    let w = window.width();
-    let h = window.height();
-
-    // Compute the candidate tile_w without mutating config,
-    // and skip the full recalculation if the change is negligible.
-    let cols = (config.max_col + 1) as f32;
-    let rows = (config.max_row + 1) as f32;
-    let ratio = 3.0_f32 / 4.0;
-    let available_w = w - 80.0;
-    let available_h = h - 120.0;
-    let tile_w_candidate = {
-        let from_w = available_w / cols;
-        let from_h = (available_h / rows) / ratio;
-        from_w.min(from_h).floor()
-    };
-
-    if (tile_w_candidate - config.tile_w).abs() > 0.5 {
-        config.recalculate(w, h);
+    if resize_events.read().count() == 0 {
+        return;
     }
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    config.recalculate(window.width(), window.height());
 }

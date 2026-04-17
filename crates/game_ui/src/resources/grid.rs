@@ -5,6 +5,9 @@ use game_core::resources::map::MapBounds;
 const CELL_ASPECT_W: f32 = 4.0;
 const CELL_ASPECT_H: f32 = 3.0;
 
+const MARGIN_X: f32 = 40.0;
+const MARGIN_Y: f32 = 60.0;
+
 #[derive(Resource)]
 pub struct GridRenderConfig {
     /// Width of a single tile in world units.
@@ -39,6 +42,30 @@ impl Default for GridRenderConfig {
 }
 
 impl GridRenderConfig {
+    pub fn candidate_tile_w(&self, window_width: f32, window_height: f32) -> f32 {
+        let cols = (self.max_col + 1) as f32;
+        let rows = (self.max_row + 1) as f32;
+
+        let available_w = window_width - MARGIN_X * 2.0;
+        let available_h = window_height - MARGIN_Y * 2.0;
+
+        let ratio = CELL_ASPECT_H / CELL_ASPECT_W;
+
+        let tile_w_from_w = available_w / cols;
+        let tile_h_from_w = tile_w_from_w * ratio;
+
+        let tile_h_from_h = available_h / rows;
+        let tile_w_from_h = tile_h_from_h / ratio;
+
+        let (tile_w, _) = if tile_h_from_w * rows <= available_h {
+            (tile_w_from_w, tile_h_from_w)
+        } else {
+            (tile_w_from_h, tile_h_from_h)
+        };
+
+        tile_w.floor()
+    }
+
     /// Recalculate tile dimensions and grid offset to fill the available
     /// window area while preserving the [`CELL_ASPECT_W`]:[`CELL_ASPECT_H`]
     /// cell aspect ratio.
@@ -46,11 +73,8 @@ impl GridRenderConfig {
         let cols = (self.max_col + 1) as f32;
         let rows = (self.max_row + 1) as f32;
 
-        let margin_x = 40.0;
-        let margin_y = 60.0;
-
-        let available_w = window_width - margin_x * 2.0;
-        let available_h = window_height - margin_y * 2.0;
+        let available_w = (window_width - MARGIN_X * 2.0).max(1.0);
+        let available_h = (window_height - MARGIN_Y * 2.0).max(1.0);
 
         // Determine the largest cell size that fits the available area while
         // respecting the desired aspect ratio.
@@ -69,8 +93,8 @@ impl GridRenderConfig {
             (tile_w_from_h, tile_h_from_h)
         };
 
-        self.tile_w = tile_w.floor();
-        self.tile_h = tile_h.floor();
+        self.tile_w = tile_w.floor().max(1.0);
+        self.tile_h = tile_h.floor().max(1.0);
 
         let grid_w = self.tile_w * cols;
         let grid_h = self.tile_h * rows;
