@@ -51,7 +51,7 @@ fn get_cell_state(ci: vec2<f32>, t: f32) -> CellState {
 fn get_edge_line_alpha(cf: vec2<f32>, energy: f32) -> f32 {
     let thickness = 0.01 + energy * 0.01;
     let dist_to_edge = min(min(cf.x, 1.0 - cf.x), min(cf.y, 1.0 - cf.y));
-    return smoothstep(thickness, 0.0, dist_to_edge);
+    return 1.0 - smoothstep(0.0, thickness, dist_to_edge);
 }
 
 fn is_out_of_bounds(ci: vec2<f32>, bounds: vec4<f32>) -> bool {
@@ -75,6 +75,9 @@ fn get_cell_color(state: CellState, enemy_area: bool) -> vec3<f32> {
     return color;
 }
 
+const DEFENSE_THICKNESS_PX: f32 = 20.0;
+const C_DEFENSE: vec3<f32> = vec3<f32>(0.1, 1.0, 0.3);
+
 // border rendering =====================================================
 
 /// Returns the intensity of the left-edge defense line drawn at column 0.
@@ -83,9 +86,8 @@ fn get_defense_line_alpha(ci: vec2<f32>, cf: vec2<f32>, tile_size: vec2<f32>) ->
     if ci.x != 0.0 {
         return 0.0;
     }
-    let thickness_px = 20.0;
-    let thickness = thickness_px / tile_size.x;
-    return smoothstep(thickness, 0.0, cf.x);
+    let thickness = DEFENSE_THICKNESS_PX / tile_size.x;
+    return 1.0 - smoothstep(0.0, thickness, cf.x);
 }
 
 // post processing ===============================================
@@ -118,8 +120,7 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
     col = apply_post_processing(col, uv, sea_mat.resolution.y);
 
     let defense = get_defense_line_alpha(grid.ci, grid.cf, sea_mat.tile_size);
-    let c_defense = vec3<f32>(0.1, 1.0, 0.3);
-    col = mix(col, c_defense, defense * 0.9);
+    col = mix(col, C_DEFENSE, defense * 0.9);
 
     return vec4<f32>(col, 1.0);
 }

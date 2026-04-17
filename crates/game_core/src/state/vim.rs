@@ -25,7 +25,7 @@ pub enum ModeKind {
     Normal,
     Insert,
     Visual,
-    OperatorPending(String),
+    OperatorPending,
 }
 
 impl VimState {
@@ -34,7 +34,7 @@ impl VimState {
             Mode::Normal => ModeKind::Normal,
             Mode::Insert => ModeKind::Insert,
             Mode::Visual => ModeKind::Visual,
-            Mode::OperatorPending(op) => ModeKind::OperatorPending(format!("{op:?}")),
+            Mode::OperatorPending(_) => ModeKind::OperatorPending,
         }
     }
 }

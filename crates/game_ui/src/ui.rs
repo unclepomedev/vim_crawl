@@ -89,7 +89,7 @@ fn render_status_line(ui: &mut Ui, vim_state: &VimState) {
         // Push the cursor position to the right edge.
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             ui.label(
-                RichText::new("1,1")
+                RichText::new("1,1") // TODO: replace with actual cursor position from VimState
                     .monospace()
                     .size(12.0)
                     .color(Color32::from_rgb(60, 100, 80)),
@@ -123,7 +123,7 @@ impl ModeBadge {
                 bg: Color32::from_rgb(100, 40, 120),  // purple bg
                 fg: Color32::from_rgb(220, 180, 255), // light purple text
             },
-            ModeKind::OperatorPending(_) => Self {
+            ModeKind::OperatorPending => Self {
                 label: "OPERATOR",
                 bg: Color32::from_rgb(140, 80, 20),   // amber bg
                 fg: Color32::from_rgb(255, 210, 140), // light amber text
@@ -164,14 +164,6 @@ fn render_grid_labels(ctx: &Context, config: &GridRenderConfig, origin_x: f32, o
     let label_color = Color32::from_rgb(40, 100, 160);
     let font = FontId::monospace(16.0);
 
-    // egui uses logical pixels; Bevy window size is in physical pixels.
-    // Divide by pixels_per_point to convert to logical coordinates.
-    let ppp = ctx.pixels_per_point();
-    let ox = origin_x / ppp;
-    let oy = origin_y / ppp;
-    let tw = config.tile_w / ppp;
-    let th = config.tile_h / ppp;
-
     let place_label = |ctx: &Context, id: Id, pos: Pos2, text: String| {
         Area::new(id)
             .fixed_pos(pos)
@@ -181,20 +173,22 @@ fn render_grid_labels(ctx: &Context, config: &GridRenderConfig, origin_x: f32, o
             });
     };
 
+    let tw = config.tile_w;
     for col in 0..=config.max_col {
         place_label(
             ctx,
             Id::new(("col_label", col)),
-            Pos2::new(ox + col as f32 * tw + tw * 0.5 - 8.0, oy - 24.0),
+            Pos2::new(origin_x + col as f32 * tw + tw * 0.5 - 8.0, origin_y - 24.0),
             (col + 1).to_string(),
         );
     }
 
+    let th = config.tile_h;
     for row in 0..=config.max_row {
         place_label(
             ctx,
             Id::new(("row_label", row)),
-            Pos2::new(ox - 16.0, oy + row as f32 * th + th * 0.5 - 6.0),
+            Pos2::new(origin_x - 16.0, origin_y + row as f32 * th + th * 0.5 - 6.0),
             (row + 1).to_string(),
         );
     }
