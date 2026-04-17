@@ -9,19 +9,17 @@ pub fn process_movement_intention(
     map_bounds: Res<MapBounds>,
     mut player_q: Query<&mut GridPosition, With<Player>>,
 ) {
-    if let Ok(mut pos) = player_q.single_mut() {
-        for intention in move_reader.read() {
-            let new_col = pos.col + intention.d_col;
-            let new_row = pos.row + intention.d_row;
+    let Ok(mut pos) = player_q.single_mut() else {
+        return;
+    };
 
-            if new_col >= map_bounds.min_col
-                && new_col <= map_bounds.max_col
-                && new_row >= map_bounds.min_row
-                && new_row <= map_bounds.max_row
-            {
-                pos.col = new_col;
-                pos.row = new_row;
-            }
+    for intention in move_reader.read() {
+        let new_col = pos.col + intention.d_col;
+        let new_row = pos.row + intention.d_row;
+
+        if map_bounds.is_passable(new_col, new_row) {
+            pos.col = new_col;
+            pos.row = new_row;
         }
     }
 }
@@ -33,12 +31,7 @@ mod tests {
     fn setup_test_app() -> App {
         let mut app = App::new();
 
-        app.insert_resource(MapBounds {
-            min_col: 0,
-            max_col: 9,
-            min_row: 0,
-            max_row: 4,
-        });
+        app.insert_resource(MapBounds::default());
 
         app.add_message::<MoveIntentionEvent>();
         app.add_systems(Update, process_movement_intention);
@@ -84,6 +77,24 @@ mod tests {
         let pos = app.world().get::<GridPosition>(player_entity).unwrap();
         assert_eq!(pos.col, 0);
         assert_eq!(pos.row, 0);
+    }
+
+    #[test]
+    fn move_blocks_at_enemy_spawn_boundary() {
+        let mut app = setup_test_app();
+
+        // Passable area is 0-7. Col 8 and 9 are spawn areas.
+        let player_entity = app
+            .world_mut()
+            .spawn((Player, GridPosition { col: 7, row: 0 }))
+            .id();
+
+        app.world_mut()
+            .write_message(MoveIntentionEvent { d_col: 1, d_row: 0 });
+        app.update();
+
+        let pos = app.world().get::<GridPosition>(player_entity).unwrap();
+        assert_eq!(pos.col, 7); // Blocked at col 8
     }
 
     #[test]

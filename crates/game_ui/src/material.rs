@@ -1,15 +1,12 @@
 use crate::components::MainCamera;
 use crate::resources::grid::GridRenderConfig;
+use bevy::render::render_graph::{InternedRenderLabel, RenderLabel};
 use bevy::window::PrimaryWindow;
 use bevy::{
     core_pipeline::{core_2d::graph::Node2d, fullscreen_material::FullscreenMaterial},
     prelude::*,
     reflect::TypePath,
-    render::{
-        extract_component::ExtractComponent,
-        render_graph::{InternedRenderLabel, RenderLabel},
-        render_resource::ShaderType,
-    },
+    render::{extract_component::ExtractComponent, render_resource::ShaderType},
     shader::ShaderRef,
 };
 
@@ -21,12 +18,13 @@ pub struct ElectronSeaMaterial {
     pub offset: Vec2,     // 8 bytes
     pub resolution: Vec2, // 8 bytes
     pub camera_pos: Vec2, // 8 bytes
+    pub bounds: Vec4,     // 16 bytes,  x: max_col, y: max_row, z: enemy_spawn_cols, w: unused
 }
 
 //noinspection ALL: suppress "Trait `WriteInto` is not implemented for `ElectronSeaMaterial`"
 impl FullscreenMaterial for ElectronSeaMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/electron_sea.wgsl".into()
+        "shaders/field.wgsl".into()
     }
 
     fn node_edges() -> Vec<InternedRenderLabel> {
@@ -61,5 +59,11 @@ pub fn update_world_material(
         mat.camera_pos = camera_pos;
         mat.tile_size = config.tile_size;
         mat.offset = Vec2::new(config.offset_x, config.offset_z);
+        mat.bounds = Vec4::new(
+            config.max_col as f32,
+            config.max_row as f32,
+            config.enemy_spawn_cols as f32,
+            0.0,
+        );
     }
 }
