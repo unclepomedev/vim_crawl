@@ -1,5 +1,5 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
-#import "shaders/math.wgsl"::{hash2, fbm, smin}
+#import "shaders/math.wgsl"::{hash2, fbm}
 
 struct ElectronSeaMaterial {
     time: f32,

@@ -24,7 +24,3 @@ fn fbm(p: vec2<f32>) -> f32 {
     }
     return val;
 }
-
-fn smin(a: f32, edge0: f32, edge1: f32) -> f32 {
-    return 1.0 - smoothstep(edge0, edge1, a);
-}
