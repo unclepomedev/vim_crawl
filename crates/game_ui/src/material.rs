@@ -14,11 +14,13 @@ use bevy::{
 #[derive(Component, ExtractComponent, Clone, Copy, Default, ShaderType, TypePath)]
 pub struct ElectronSeaMaterial {
     pub time: f32,        // 4 bytes
-    pub tile_size: f32,   // 4 bytes
+    pub tile_size: Vec2,  // 8 bytes,  (tile_w, tile_h)
     pub offset: Vec2,     // 8 bytes
     pub resolution: Vec2, // 8 bytes
     pub camera_pos: Vec2, // 8 bytes
     pub bounds: Vec4,     // 16 bytes,  x: max_col, y: max_row, z: enemy_spawn_cols, w: unused
+    pub _pad0: f32,       // 4 bytes
+    pub _pad1: Vec2,      // 8 bytes
 }
 
 //noinspection ALL: suppress "Trait `WriteInto` is not implemented for `ElectronSeaMaterial`"
@@ -57,7 +59,7 @@ pub fn update_world_material(
         mat.time = time.elapsed_secs();
         mat.resolution = resolution;
         mat.camera_pos = camera_pos;
-        mat.tile_size = config.tile_size;
+        mat.tile_size = Vec2::new(config.tile_w, config.tile_h);
         mat.offset = Vec2::new(config.offset_x, config.offset_z);
         mat.bounds = Vec4::new(
             config.max_col as f32,

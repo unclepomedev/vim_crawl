@@ -1,13 +1,16 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 #import "shaders/math.wgsl"::{hash2, fbm}
 
+// see material.rs
 struct ElectronSeaMaterial {
     time: f32,
-    tile_size: f32,
+    tile_size: vec2<f32>,
     offset: vec2<f32>,
     resolution: vec2<f32>,
     camera_pos: vec2<f32>,
     bounds: vec4<f32>,
+    _pad0: f32,
+    _pad1: vec2<f32>
 }
 
 @group(0) @binding(2)
@@ -19,11 +22,11 @@ struct GridSpace {
     cf: vec2<f32>, // inside cell coordinates (0.0 - 1.0)
 }
 
-fn get_grid_space(uv: vec2<f32>, res: vec2<f32>, cam: vec2<f32>, offset: vec2<f32>, tile_size: f32) -> GridSpace {
+fn get_grid_space(uv: vec2<f32>, res: vec2<f32>, cam: vec2<f32>, offset: vec2<f32>, tile_size: vec2<f32>) -> GridSpace {
     let pixel_pos = (uv - 0.5) * res;
     let world_pos = pixel_pos + cam;
-    let safe_tile_size = max(abs(tile_size), 0.0001);
-    let cell = (world_pos - offset) / safe_tile_size;
+    let safe_tile = max(abs(tile_size), vec2<f32>(0.0001, 0.0001));
+    let cell = (world_pos - offset) / safe_tile;
     let draw_cell = cell + 0.5;
     return GridSpace(floor(draw_cell), fract(draw_cell));
 }

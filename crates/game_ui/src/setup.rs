@@ -14,7 +14,7 @@ pub fn sync_player_scale_on_grid_config_change(
     mut query: Query<&mut Transform, With<Player>>,
 ) {
     if config.is_changed() {
-        let scale = config.tile_size * MODEL_OCCUPATION_RATE;
+        let scale = config.tile_h * MODEL_OCCUPATION_RATE;
         for mut transform in query.iter_mut() {
             transform.scale = Vec3::splat(scale);
         }
@@ -60,7 +60,7 @@ pub fn setup_cameras_and_player(
         Transform::from_xyz(1.0, 3.0, 2.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
-    let scale = config.tile_size * MODEL_OCCUPATION_RATE;
+    let scale = config.tile_h * MODEL_OCCUPATION_RATE; // TODO:
 
     commands.spawn((
         SceneRoot(asset_server.load("models/turret.glb#Scene0")),
@@ -84,15 +84,20 @@ pub fn recalculate_grid_on_window_resize(
     let w = window.width();
     let h = window.height();
 
-    let new_tile = {
-        let cols = (config.max_col + 1) as f32;
-        let rows = (config.max_row + 1) as f32;
-        let available_w = w - 80.0;
-        let available_h = h - 120.0;
-        (available_w / cols).min(available_h / rows).floor()
+    // Compute the candidate tile_w without mutating config,
+    // and skip the full recalculation if the change is negligible.
+    let cols = (config.max_col + 1) as f32;
+    let rows = (config.max_row + 1) as f32;
+    let ratio = 3.0_f32 / 4.0;
+    let available_w = w - 80.0;
+    let available_h = h - 120.0;
+    let tile_w_candidate = {
+        let from_w = available_w / cols;
+        let from_h = (available_h / rows) / ratio;
+        from_w.min(from_h).floor()
     };
 
-    if (new_tile - config.tile_size).abs() > 0.5 {
+    if (tile_w_candidate - config.tile_w).abs() > 0.5 {
         config.recalculate(w, h);
     }
 }
