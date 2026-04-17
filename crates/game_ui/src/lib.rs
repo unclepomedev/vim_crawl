@@ -13,7 +13,7 @@ pub mod ui;
 
 use crate::material::{ElectronSeaMaterial, update_world_material};
 use crate::resources::grid::GridRenderConfig;
-use crate::setup::sync_player_scale_on_grid_config_change;
+use crate::setup::{recalculate_grid_on_window_resize, sync_player_scale_on_grid_config_change};
 use setup::setup_cameras_and_player;
 use ui::render_editor_ui;
 
@@ -29,6 +29,7 @@ impl Plugin for GameUiPlugin {
         app.add_systems(
             Update,
             (
+                recalculate_grid_on_window_resize,
                 update_world_material,
                 render_editor_ui.after(process_vim_input),
                 sync_player_scale_on_grid_config_change,

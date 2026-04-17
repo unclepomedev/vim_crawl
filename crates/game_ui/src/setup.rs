@@ -3,6 +3,7 @@ use crate::material::ElectronSeaMaterial;
 use crate::resources::grid::GridRenderConfig;
 use bevy::camera::ScalingMode;
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use game_core::components::grid::GridPosition;
 use game_core::components::player::Player;
 use std::f32::consts::FRAC_PI_2;
@@ -71,4 +72,27 @@ pub fn setup_cameras_and_player(
             rotation: Quat::from_rotation_y(FRAC_PI_2) * Quat::from_rotation_z(-FRAC_PI_2 / 2.0),
         },
     ));
+}
+
+/// Recalculate [GridRenderConfig] when the window is resized.
+pub fn recalculate_grid_on_window_resize(
+    mut config: ResMut<GridRenderConfig>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+) {
+    let Ok(window) = windows.single() else { return };
+
+    let w = window.width();
+    let h = window.height();
+
+    let new_tile = {
+        let cols = (config.max_col + 1) as f32;
+        let rows = (config.max_row + 1) as f32;
+        let available_w = w - 80.0;
+        let available_h = h - 120.0;
+        (available_w / cols).min(available_h / rows).floor()
+    };
+
+    if (new_tile - config.tile_size).abs() > 0.5 {
+        config.recalculate(w, h);
+    }
 }
