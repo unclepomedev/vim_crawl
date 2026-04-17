@@ -17,13 +17,24 @@ impl Default for VimState {
     }
 }
 
+/// A UI-facing summary of the current editor mode.
+/// This type intentionally mirrors `vim_engine::state::Mode`
+/// without exposing the underlying crate to downstream consumers.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ModeKind {
+    Normal,
+    Insert,
+    Visual,
+    OperatorPending(String),
+}
+
 impl VimState {
-    pub fn get_mode_display_string(&self) -> String {
+    pub fn mode_kind(&self) -> ModeKind {
         match self.parser.state.mode {
-            Mode::Normal => "-- NORMAL --".to_string(),
-            Mode::Insert => "-- INSERT --".to_string(),
-            Mode::Visual => "-- VISUAL --".to_string(),
-            Mode::OperatorPending(op) => format!("-- OPERATOR PENDING ({op:?}) --"),
+            Mode::Normal => ModeKind::Normal,
+            Mode::Insert => ModeKind::Insert,
+            Mode::Visual => ModeKind::Visual,
+            Mode::OperatorPending(op) => ModeKind::OperatorPending(format!("{op:?}")),
         }
     }
 }
