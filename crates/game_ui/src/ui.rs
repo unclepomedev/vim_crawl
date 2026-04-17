@@ -33,17 +33,7 @@ pub fn render_editor_ui(
         ..default()
     };
 
-    // Convert grid world-space origin to screen pixels.
-    // offset_x / offset_z are the world-space positions of cell (0,0) center.
-    let Ok(window) = windows.single() else { return };
-    let win_w = window.width();
-    let win_h = window.height();
-    let cx = win_w * 0.5;
-    let cy = win_h * 0.5;
-
-    let grid_origin_x = cx + config.offset_x - config.tile_w * 0.5;
-    let grid_origin_y = cy + config.offset_z - config.tile_h * 0.5;
-
+    // These panels must always render after warmup, regardless of window availability.
     TopBottomPanel::bottom("vim_status_line")
         .frame(bottom_frame)
         .show(ctx, |ui| render_status_line(ui, &vim_state));
@@ -59,6 +49,12 @@ pub fn render_editor_ui(
         render_text_buffer(ui, &vim_state.buffer);
     });
 
+    // Grid labels require the window size; skip silently if unavailable.
+    let Ok(window) = windows.single() else { return };
+    let cx = window.width() * 0.5;
+    let cy = window.height() * 0.5;
+    let grid_origin_x = cx + config.offset_x - config.tile_w * 0.5;
+    let grid_origin_y = cy + config.offset_z - config.tile_h * 0.5;
     render_grid_labels(ctx, &config, grid_origin_x, grid_origin_y);
 }
 
