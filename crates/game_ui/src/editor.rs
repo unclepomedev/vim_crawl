@@ -2,9 +2,9 @@ mod grid_labels;
 mod panel;
 mod status_line;
 
-use crate::editor::grid_labels::render_grid_labels;
-use crate::editor::panel::{render_header, render_text_buffer};
-use crate::editor::status_line::render_status_line;
+use self::grid_labels::render_grid_labels;
+use self::panel::{render_header, render_text_buffer};
+use self::status_line::render_status_line;
 use crate::resources::grid::GridRenderConfig;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
