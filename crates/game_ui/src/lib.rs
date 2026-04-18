@@ -5,17 +5,17 @@ use game_core::systems::actions::movement::process_movement_intention;
 use game_core::systems::vim::process_vim_input;
 
 pub mod components;
+pub mod editor;
 pub mod material;
 pub mod render;
 pub mod resources;
 pub mod setup;
-pub mod ui;
 
 use crate::material::{ElectronSeaMaterial, update_world_material};
 use crate::resources::grid::GridRenderConfig;
 use crate::setup::{recalculate_grid_on_window_resize, sync_player_scale_on_grid_config_change};
+use editor::render_editor_ui;
 use setup::setup_cameras_and_player;
-use ui::render_editor_ui;
 
 pub struct GameUiPlugin;
 
