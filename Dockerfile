@@ -1,4 +1,4 @@
-FROM rust:1.94-slim
+FROM rust:1.95-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
