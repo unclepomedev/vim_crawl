@@ -1,5 +1,6 @@
 use bevy::core_pipeline::fullscreen_material::FullscreenMaterialPlugin;
 use bevy::prelude::*;
+#[cfg(feature = "dev")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::systems::actions::movement::process_movement_intention;
 use game_core::systems::vim::process_vim_input;
@@ -23,7 +24,7 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GridRenderConfig>();
         app.add_plugins(FullscreenMaterialPlugin::<ElectronSeaMaterial>::default());
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "dev")]
         app.add_plugins(WorldInspectorPlugin::new());
         app.add_systems(Startup, setup_cameras_and_player);
         app.add_systems(

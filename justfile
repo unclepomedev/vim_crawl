@@ -48,6 +48,9 @@ test: test-rs
 run-wasm:
     trunk serve
 
+run-wasm-dev:
+    trunk serve --features dev
+
 run-docker-compose-up-build:
     docker compose up --build
 
