@@ -1,4 +1,5 @@
 FROM rust:1.95-slim
+# check rust-toolchain.toml
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
@@ -11,13 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cargo install trunk
-RUN rustup target add wasm32-unknown-unknown
 
 RUN useradd --create-home --uid 10001 appuser
 
 ENV CARGO_HOME=/home/appuser/.cargo
+ENV CARGO_TARGET_DIR=/home/appuser/.cargo/target
 
-RUN mkdir -p /home/appuser/.cargo/registry && chown -R appuser:appuser /home/appuser/.cargo
+RUN mkdir -p /home/appuser/.cargo/registry /home/appuser/.cargo/target \
+    && chown -R appuser:appuser /home/appuser/.cargo
 
 WORKDIR /app
 COPY . .
