@@ -16,8 +16,10 @@ RUN cargo install trunk
 RUN useradd --create-home --uid 10001 appuser
 
 ENV CARGO_HOME=/home/appuser/.cargo
+ENV CARGO_TARGET_DIR=/home/appuser/.cargo/target
 
-RUN mkdir -p /home/appuser/.cargo/registry && chown -R appuser:appuser /home/appuser/.cargo
+RUN mkdir -p /home/appuser/.cargo/registry /home/appuser/.cargo/target \
+    && chown -R appuser:appuser /home/appuser/.cargo
 
 WORKDIR /app
 COPY . .
