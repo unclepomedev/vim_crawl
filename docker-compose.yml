@@ -5,9 +5,11 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
-      - cargo-cache:/usr/local/cargo/registry
+      - cargo-cache:/home/appuser/.cargo/registry
+      - target-cache:/app/target
     environment:
       - CARGO_TERM_COLOR=always
 
 volumes:
   cargo-cache:
+  target-cache:
