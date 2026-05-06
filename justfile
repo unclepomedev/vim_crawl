@@ -11,6 +11,9 @@ clone_bevy := "bevy_tmp"
 clone_egui := "bevy_egui_tmp"
 PROJECT_ROOT := justfile_directory()
 
+default:
+    @just --list
+
 # setup ===============================================================================================================
 dump_ex:
     @set -e; \
