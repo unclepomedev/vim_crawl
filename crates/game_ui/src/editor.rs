@@ -12,21 +12,12 @@ use bevy_egui::EguiContexts;
 use bevy_egui::egui::{CentralPanel, Color32, Frame, Margin, TopBottomPanel};
 use game_core::state::vim::VimState;
 
-// To avoid initialization lag between macOS and Metal, the first 10 frames will skip the rendering process.
-const WARMUP_FRAMES: u32 = 10;
-
 pub fn render_editor_ui(
     mut contexts: EguiContexts,
     vim_state: Res<VimState>,
     config: Res<GridRenderConfig>,
     windows: Query<&Window, With<PrimaryWindow>>,
-    mut frame_counter: Local<u32>,
 ) {
-    if *frame_counter < WARMUP_FRAMES {
-        *frame_counter += 1;
-        return;
-    }
-
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
