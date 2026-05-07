@@ -4,7 +4,3 @@ dist = "dist"
 
 [watch]
 ignore = ["target", "dist", ".idea", ".venv", ".git", ".ruff_cache", "misc", "tools"]
-
-[[copy]]
-from = "assets"
-to = "assets"
