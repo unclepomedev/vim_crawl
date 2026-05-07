@@ -1,9 +1,9 @@
 use bevy::core_pipeline::fullscreen_material::FullscreenMaterialPlugin;
 use bevy::prelude::*;
+use bevy_egui::EguiPrimaryContextPass;
 #[cfg(feature = "dev")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use game_core::systems::actions::movement::process_movement_intention;
-use game_core::systems::vim::process_vim_input;
 
 pub mod components;
 pub mod editor;
@@ -32,13 +32,10 @@ impl Plugin for GameUiPlugin {
             (
                 recalculate_grid_on_window_resize,
                 update_world_material,
-                render_editor_ui.after(process_vim_input),
                 sync_player_scale_on_grid_config_change,
+                render::sync_grid_to_transform.after(process_movement_intention),
             ),
         );
-        app.add_systems(
-            Update,
-            render::sync_grid_to_transform.after(process_movement_intention),
-        );
+        app.add_systems(EguiPrimaryContextPass, render_editor_ui);
     }
 }
