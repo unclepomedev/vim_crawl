@@ -28,7 +28,6 @@ pub fn render_editor_ui(
         ..default()
     };
 
-    // These panels must always render after warmup, regardless of window availability.
     TopBottomPanel::bottom("vim_status_line")
         .frame(bottom_frame)
         .show(ctx, |ui| render_status_line(ui, &vim_state));
