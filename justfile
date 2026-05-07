@@ -76,6 +76,6 @@ fmt-py:
 pch:
     set -e
     gitleaks protect --staged --redact --no-banner
-    status=0; rg '[\p{Han}\p{Hiragana}\p{Katakana}]' src crates assets ramen_assets .cargo .github tools >/dev/null || status=$?; [ "$status" -eq 1 ]
+    status=0; rg '[\p{Han}\p{Hiragana}\p{Katakana}]' src crates assets ramen_assets .github tools >/dev/null || status=$?; [ "$status" -eq 1 ]
     cargo fmt --all -- --check
     cargo clippy --all-targets --all-features -- -D warnings
