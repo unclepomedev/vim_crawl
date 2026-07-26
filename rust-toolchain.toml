@@ -1,4 +1,4 @@
 [toolchain]
-channel = "1.96" # check: Dockerfile
+channel = "1.97" # check: Dockerfile
 components = ["rustfmt", "clippy"]
 targets = ["wasm32-unknown-unknown"]
