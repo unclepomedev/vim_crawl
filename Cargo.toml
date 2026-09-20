@@ -10,9 +10,9 @@ members = ["crates/*", "ramen_assets", "."]
 default-members = ["crates/*", "."]
 
 [workspace.dependencies]
-bevy = "0.18.1"
-bevy_egui = "0.39.1"
-bevy-inspector-egui = "0.36.0"
+bevy = "0.19.1"
+bevy_egui = "0.42.0"
+bevy-inspector-egui = "0.37.0"
 
 [dependencies]
 bevy = { workspace = true }
