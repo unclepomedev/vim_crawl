@@ -1,4 +1,4 @@
-FROM rust:1.98-slim
+FROM rust:1.99-slim
 # check rust-toolchain.toml
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
